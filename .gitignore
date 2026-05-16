@@ -1,0 +1,7 @@
+target/
+.cache/
+.claude/
+.vscode/
+bridge/build/
+*.o
+*.obj

@@ -23,17 +23,7 @@ CJForm 是仓颉语言的 Windows 原生 UI 库。通过 C++ 桥接 Win32 API / 
 cjpm init
 ```
 
-### 2. 获取 CJForm
-
-```bash
-git clone https://github.com/Sunse666/CjForm.git
-cp -r CjForm/src ./cjform
-cp CjForm/bridge.dll ./
-```
-
-> `src/` 和 `bridge.dll` 是必须的。不需要整个仓库，拿到这两个即可。
-
-### 3. 配置 cjpm.toml
+### 2. 配置 cjpm.toml
 
 ```toml
 [package]
@@ -44,6 +34,13 @@ cp CjForm/bridge.dll ./
   link-option = "-L. -lbridge --subsystem windows"
 
 [dependencies]
+cjform = { git = "https://github.com/Sunse666/CjForm.git" }
+```
+
+### 3. 下载 bridge.dll
+
+```bash
+curl -LO https://github.com/Sunse666/CjForm/raw/main/bridge.dll
 ```
 
 ### 4. 编写代码
@@ -72,7 +69,7 @@ main(): Int64 {
 }
 ```
 
-或者使用样式表简化重复参数：
+使用样式表简化重复参数：
 
 ```cj
 StyleSheet.getDefault()
@@ -95,18 +92,30 @@ cjpm run
 
 ---
 
+## 手动安装（不用 git 依赖）
+
+```bash
+git clone https://github.com/Sunse666/CjForm.git
+cp -r CjForm/cjform ./
+cp CjForm/bridge.dll ./
+```
+
+然后在 `cjpm.toml` 中使用本地路径依赖：
+
+```toml
+[dependencies]
+cjform = { path = "./cjform" }
+```
+
+---
+
 ## 目录结构
 
 ```
 myapp/
 ├── src/
 │   └── main.cj          # 你的代码
-├── cjform/              # CJForm 库源码（从仓库 src/ 复制）
-│   ├── window.cj
-│   ├── widget.cj
-│   ├── button.cj
-│   ├── ...
-│   └── style_sheet.cj
+├── cjform/              # （仅手动安装时需要）CJForm 库源码
 ├── bridge.dll           # C++ Win32 / GDI+ 桥接
 └── cjpm.toml
 ```
@@ -131,12 +140,11 @@ myapp/
 
 ```cj
 // 主题切换（全局颜色）
-Theme.setCurrent(Theme.dark())   // 暗色
-Theme.setCurrent(Theme.light())  // 亮色
-Theme.toggle()                   // 切换
+Theme.setCurrent(Theme.dark())
+Theme.setCurrent(Theme.light())
+Theme.toggle()
 
 let c = Theme.colors()
-// c.bgPrimary, c.textPrimary, c.accent, c.border, ...
 
 // 样式表（字体 / 尺寸 / 锚点复用）
 StyleSheet.getDefault()
@@ -166,25 +174,28 @@ Canvas 渲染抽象
 bridge.dll（C++ Win32 / GDI+ FFI）
 ```
 
-### 源码目录
+## 项目源码目录
 
 ```
 .
-├── README.md
+├── cjform/                  # 库（发布为 static lib）
+│   ├── cjpm.toml
+│   └── src/
+│       ├── window.cj
+│       ├── widget.cj
+│       ├── button.cj
+│       ├── text_edit.cj
+│       ├── theme.cj
+│       ├── style_sheet.cj
+│       └── ...
+├── src/
+│   └── main.cj              # 控件演示程序（gallery）
+├── bridge.dll
+├── bridge/                  # C++ 桥接源码
+│   ├── bridge.cpp
+│   └── CMakeLists.txt
 ├── cjpm.toml
-├── bridge.dll                # 预编译 DLL
-├── src/                      # 仓颉库源码
-│   ├── window.cj
-│   ├── widget.cj
-│   ├── button.cj
-│   ├── text_edit.cj
-│   ├── theme.cj
-│   ├── style_sheet.cj
-│   ├── ...
-│   └── main.cj               # 控件演示程序
-└── bridge/                   # C++ 桥接源码
-    ├── bridge.cpp
-    └── CMakeLists.txt
+└── README.md
 ```
 
 ---

@@ -1,5 +1,6 @@
-package cjform
+package gallery
 
+import cjform.*
 import std.collection.*
 
 main(): Int64 {

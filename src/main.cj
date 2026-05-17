@@ -5,6 +5,32 @@ import std.collection.*
 main(): Int64 {
     Theme.setCurrent(Theme.dark())
 
+    StyleSheet.getDefault()
+        .define("btn", StyleProperties()
+            .withFontFamily("Microsoft YaHei")
+            .withFontSize(14.0)
+            .withSizeScale(SizeScale.scalable())
+            .withAnchor(Anchor.Center))
+        .define("sm-btn", StyleProperties()
+            .withFontFamily("Microsoft YaHei")
+            .withFontSize(13.0)
+            .withSizeScale(SizeScale.fixed())
+            .withAnchor(Anchor.Center))
+        .define("section-title", StyleProperties()
+            .withFontFamily("Microsoft YaHei")
+            .withFontSize(16.0)
+            .withSizeScale(SizeScale.fixed())
+            .withAnchor(Anchor.CenterLeft))
+        .define("body-label", StyleProperties()
+            .withFontFamily("Microsoft YaHei")
+            .withFontSize(14.0)
+            .withSizeScale(SizeScale.fixed())
+            .withAnchor(Anchor.CenterLeft))
+        .define("input", StyleProperties()
+            .withFontFamily("Microsoft YaHei")
+            .withFontSize(14.0)
+            .withSizeScale(SizeScale.scalable()))
+
     let win = Window("CJForm v1.0 — Widget Gallery", 1050, 720)
     win.setMinSize(900, 600)
     win.setBackgroundColor(Theme.colors().bgSecondary)
@@ -13,13 +39,11 @@ main(): Int64 {
     menuBar.setLayoutFrame(LayoutFrame(0.0, 0.0, 1050.0, 28.0))
     win.addWidget(menuBar)
 
-    let titleLabel = Label("CJForm v1.0 Widget Gallery",
-        Position.abs(20.0, 40.0),
-        Theme.colors().textPrimary,
-        "Microsoft YaHei", 16.0, SizeScale.fixed(), Anchor.CenterLeft)
+    let titleLabel = Label.styled("section-title", "CJForm v1.0 Widget Gallery",
+        Position.abs(20.0, 40.0), Theme.colors().textPrimary)
 
-    let themeToggleBtn = Button("Toggle Theme", Position.abs(820.0, 36.0), 120.0, 30.0,
-        "Microsoft YaHei", 13.0, SizeScale.fixed(), Anchor.Center,
+    let themeToggleBtn = Button.styled("sm-btn", "Toggle Theme",
+        Position.abs(820.0, 36.0), 120.0, 30.0,
         ButtonStyle.fromTheme(), { =>
             Theme.toggle()
             win.setBackgroundColor(Theme.colors().bgSecondary)
@@ -138,44 +162,41 @@ func createBasicControlsTab(win: Window): Widget {
     let scroll = ScrollArea()
     let vbox = VBox(12.0, 20.0)
     let c = Theme.colors()
-    let section1 = Label("Buttons", Position.abs(0.0, 0.0), c.accent, "Microsoft YaHei", 16.0, SizeScale.fixed(), Anchor.CenterLeft)
+    let section1 = Label.styled("section-title", "Buttons", Position.abs(0.0, 0.0), c.accent)
     vbox.add(section1, LayoutParams.fixed(900.0, 24.0))
     let btnRow = HBox(10.0, 0.0)
-    btnRow.add(Button("Primary", Position.abs(0.0, 0.0), 110.0, 36.0,
-        "Microsoft YaHei", 14.0, SizeScale.scalable(), Anchor.Center,
+    btnRow.add(Button.styled("btn", "Primary", Position.abs(0.0, 0.0), 110.0, 36.0,
         ButtonStyle.fromTheme(), { => println("Primary clicked") }), LayoutParams.fixed(110.0, 36.0))
-    btnRow.add(Button("Outlined", Position.abs(0.0, 0.0), 110.0, 36.0,
-        "Microsoft YaHei", 14.0, SizeScale.scalable(), Anchor.Center,
+    btnRow.add(Button.styled("btn", "Outlined", Position.abs(0.0, 0.0), 110.0, 36.0,
         ButtonStyle.outlined(), { => println("Outlined clicked") }), LayoutParams.fixed(110.0, 36.0))
-    btnRow.add(Button("Danger", Position.abs(0.0, 0.0), 90.0, 36.0,
-        "Microsoft YaHei", 14.0, SizeScale.scalable(), Anchor.Center,
+    btnRow.add(Button.styled("btn", "Danger", Position.abs(0.0, 0.0), 90.0, 36.0,
         ButtonStyle.bordered(2.0, Theme.colors().danger), { => println("Danger clicked") }), LayoutParams.fixed(90.0, 36.0))
     vbox.add(btnRow, LayoutParams.fixed(900.0, 40.0))
     vbox.add(Separator(true, SeparatorStyle.fromTheme()), LayoutParams.fixed(900.0, 10.0))
-    let section2 = Label("Text Input", Position.abs(0.0, 0.0), c.accent, "Microsoft YaHei", 16.0, SizeScale.fixed(), Anchor.CenterLeft)
+    let section2 = Label.styled("section-title", "Text Input", Position.abs(0.0, 0.0), c.accent)
     vbox.add(section2, LayoutParams.fixed(900.0, 24.0))
     let inputRow = HBox(10.0, 0.0)
-    inputRow.add(Label("Username:", Position.abs(0.0, 0.0), c.textSecondary, "Microsoft YaHei", 14.0, SizeScale.fixed(), Anchor.CenterLeft), LayoutParams.fixed(90.0, 28.0))
-    let nameBox = TextBox(Position.abs(0.0, 0.0), 200.0, 28.0, "Microsoft YaHei", 14.0, SizeScale.scalable(), TextBoxStyle.fromTheme(), "Enter username...")
+    inputRow.add(Label.styled("body-label", "Username:", Position.abs(0.0, 0.0), c.textSecondary), LayoutParams.fixed(90.0, 28.0))
+    let nameBox = TextBox.styled("input", Position.abs(0.0, 0.0), 200.0, 28.0, TextBoxStyle.fromTheme(), "Enter username...")
     inputRow.add(nameBox, LayoutParams.fixed(200.0, 28.0))
-    inputRow.add(Label("Password:", Position.abs(0.0, 0.0), c.textSecondary, "Microsoft YaHei", 14.0, SizeScale.fixed(), Anchor.CenterLeft), LayoutParams.fixed(80.0, 28.0))
-    let pwBox = TextBox(Position.abs(0.0, 0.0), 200.0, 28.0, "Microsoft YaHei", 14.0, SizeScale.scalable(), TextBoxStyle.fromTheme(), "Enter password...")
+    inputRow.add(Label.styled("body-label", "Password:", Position.abs(0.0, 0.0), c.textSecondary), LayoutParams.fixed(80.0, 28.0))
+    let pwBox = TextBox.styled("input", Position.abs(0.0, 0.0), 200.0, 28.0, TextBoxStyle.fromTheme(), "Enter password...")
     pwBox.setPasswordMode(true)
     inputRow.add(pwBox, LayoutParams.fixed(200.0, 28.0))
     vbox.add(inputRow, LayoutParams.fixed(900.0, 32.0))
     vbox.add(Separator(true, SeparatorStyle.fromTheme()), LayoutParams.fixed(900.0, 10.0))
-    let section3 = Label("Checkboxes && Radio Buttons", Position.abs(0.0, 0.0), c.accent, "Microsoft YaHei", 16.0, SizeScale.fixed(), Anchor.CenterLeft)
+    let section3 = Label.styled("section-title", "Checkboxes && Radio Buttons", Position.abs(0.0, 0.0), c.accent)
     vbox.add(section3, LayoutParams.fixed(900.0, 24.0))
     let cbRow = HBox(20.0, 0.0)
-    cbRow.add(CheckBox("Enable notifications", Position.abs(0.0, 0.0), "Microsoft YaHei", 14.0, SizeScale.scalable(), CheckBoxStyle.fromTheme(), true), LayoutParams.fixed(220.0, 24.0))
-    cbRow.add(CheckBox("Auto save", Position.abs(0.0, 0.0), "Microsoft YaHei", 14.0, SizeScale.scalable(), CheckBoxStyle.fromTheme(), false), LayoutParams.fixed(150.0, 24.0))
-    cbRow.add(CheckBox("Compact mode", Position.abs(0.0, 0.0), "Microsoft YaHei", 14.0, SizeScale.scalable(), CheckBoxStyle.fromTheme(), false), LayoutParams.fixed(170.0, 24.0))
+    cbRow.add(CheckBox.styled("btn", "Enable notifications", Position.abs(0.0, 0.0), CheckBoxStyle.fromTheme(), true), LayoutParams.fixed(220.0, 24.0))
+    cbRow.add(CheckBox.styled("btn", "Auto save", Position.abs(0.0, 0.0), CheckBoxStyle.fromTheme(), false), LayoutParams.fixed(150.0, 24.0))
+    cbRow.add(CheckBox.styled("btn", "Compact mode", Position.abs(0.0, 0.0), CheckBoxStyle.fromTheme(), false), LayoutParams.fixed(170.0, 24.0))
     vbox.add(cbRow, LayoutParams.fixed(900.0, 28.0))
     let radioGroup = RadioGroup()
     let rbRow = HBox(20.0, 0.0)
-    let rb1 = RadioButton("Option A", Position.abs(0.0, 0.0), "Microsoft YaHei", 14.0, SizeScale.scalable(), RadioButtonStyle.fromTheme())
-    let rb2 = RadioButton("Option B", Position.abs(0.0, 0.0), "Microsoft YaHei", 14.0, SizeScale.scalable(), RadioButtonStyle.fromTheme())
-    let rb3 = RadioButton("Option C", Position.abs(0.0, 0.0), "Microsoft YaHei", 14.0, SizeScale.scalable(), RadioButtonStyle.fromTheme())
+    let rb1 = RadioButton.styled("btn", "Option A", Position.abs(0.0, 0.0), RadioButtonStyle.fromTheme())
+    let rb2 = RadioButton.styled("btn", "Option B", Position.abs(0.0, 0.0), RadioButtonStyle.fromTheme())
+    let rb3 = RadioButton.styled("btn", "Option C", Position.abs(0.0, 0.0), RadioButtonStyle.fromTheme())
     radioGroup.add(rb1); radioGroup.add(rb2); radioGroup.add(rb3)
     radioGroup.setOnSelectionChanged({ idx => println("Radio selected: ${idx}") })
     rbRow.add(rb1, LayoutParams.fixed(120.0, 24.0))
@@ -183,19 +204,19 @@ func createBasicControlsTab(win: Window): Widget {
     rbRow.add(rb3, LayoutParams.fixed(120.0, 24.0))
     vbox.add(rbRow, LayoutParams.fixed(900.0, 28.0))
     vbox.add(Separator(true, SeparatorStyle.fromTheme()), LayoutParams.fixed(900.0, 10.0))
-    let section4 = Label("Sliders", Position.abs(0.0, 0.0), c.accent, "Microsoft YaHei", 16.0, SizeScale.fixed(), Anchor.CenterLeft)
+    let section4 = Label.styled("section-title", "Sliders", Position.abs(0.0, 0.0), c.accent)
     vbox.add(section4, LayoutParams.fixed(900.0, 24.0))
     let sliderRow = HBox(10.0, 0.0)
-    sliderRow.add(Label("Volume:", Position.abs(0.0, 0.0), c.textSecondary, "Microsoft YaHei", 14.0, SizeScale.fixed(), Anchor.CenterLeft), LayoutParams.fixed(60.0, 24.0))
-    sliderRow.add(Slider(Position.abs(0.0, 0.0), 200.0, SizeScale.scalable(), SliderStyle.fromTheme(), 0.0, 100.0, 65.0), LayoutParams.fixed(200.0, 24.0))
+    sliderRow.add(Label.styled("body-label", "Volume:", Position.abs(0.0, 0.0), c.textSecondary), LayoutParams.fixed(60.0, 24.0))
+    sliderRow.add(Slider.styled("input", Position.abs(0.0, 0.0), 200.0, SliderStyle.fromTheme(), 0.0, 100.0, 65.0), LayoutParams.fixed(200.0, 24.0))
     vbox.add(sliderRow, LayoutParams.fixed(900.0, 28.0))
     vbox.add(Separator(true, SeparatorStyle.fromTheme()), LayoutParams.fixed(900.0, 10.0))
-    let section5 = Label("Toggles && Progress", Position.abs(0.0, 0.0), c.accent, "Microsoft YaHei", 16.0, SizeScale.fixed(), Anchor.CenterLeft)
+    let section5 = Label.styled("section-title", "Toggles && Progress", Position.abs(0.0, 0.0), c.accent)
     vbox.add(section5, LayoutParams.fixed(900.0, 24.0))
     let toggleRow = HBox(20.0, 0.0)
-    toggleRow.add(Label("Wi-Fi:", Position.abs(0.0, 0.0), c.textSecondary, "Microsoft YaHei", 14.0, SizeScale.fixed(), Anchor.CenterLeft), LayoutParams.fixed(50.0, 22.0))
+    toggleRow.add(Label.styled("body-label", "Wi-Fi:", Position.abs(0.0, 0.0), c.textSecondary), LayoutParams.fixed(50.0, 22.0))
     toggleRow.add(ToggleSwitch(true, ToggleSwitchStyle.fromTheme()), LayoutParams.fixed(44.0, 22.0))
-    toggleRow.add(Label("Bluetooth:", Position.abs(0.0, 0.0), c.textSecondary, "Microsoft YaHei", 14.0, SizeScale.fixed(), Anchor.CenterLeft), LayoutParams.fixed(75.0, 22.0))
+    toggleRow.add(Label.styled("body-label", "Bluetooth:", Position.abs(0.0, 0.0), c.textSecondary), LayoutParams.fixed(75.0, 22.0))
     toggleRow.add(ToggleSwitch(false, ToggleSwitchStyle.fromTheme()), LayoutParams.fixed(44.0, 22.0))
     vbox.add(toggleRow, LayoutParams.fixed(900.0, 28.0))
     vbox.add(ProgressBar(0.0, 100.0, 72.0, ProgressBarStyle.fromTheme()), LayoutParams.fixed(900.0, 16.0))
@@ -206,10 +227,10 @@ func createBasicControlsTab(win: Window): Widget {
 func createTextEditTab(): Widget {
     let hbox = HBox(8.0, 8.0)
     let c = Theme.colors()
-    let editor = TextEdit("Consolas", 14.0, TextEditStyle.fromTheme())
+    let editor = TextEdit.styled("input", "Consolas", 14.0, TextEditStyle.fromTheme())
     editor.setText("Welcome to CJForm v1.0 TextEdit!\n\nThis is a multi-line text editor widget.\n\nFeatures:\n  • Multi-line editing with cursor navigation\n  • Text selection with mouse drag\n  • Copy / Cut / Paste (Ctrl+C/X/V)\n  • Undo / Redo (Ctrl+Z/Y)\n  • Select All (Ctrl+A)\n  • Arrow key navigation\n  • Home / End keys\n  • Smooth scrolling\n  • Dark / Light theme support\n\nTry typing here...")
     let infoVbox = VBox(8.0, 8.0)
-    let infoTitle = Label("Shortcuts", Position.abs(0.0, 0.0), c.accent, "Microsoft YaHei", 15.0, SizeScale.fixed(), Anchor.CenterLeft)
+    let infoTitle = Label.styled("section-title", "Shortcuts", Position.abs(0.0, 0.0), c.accent)
     infoVbox.add(infoTitle, LayoutParams.fixed(200.0, 24.0))
 
     let shortcuts = [

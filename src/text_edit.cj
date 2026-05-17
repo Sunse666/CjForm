@@ -145,6 +145,14 @@ public class TextEdit <: Widget {
         this.wrapCache = ArrayList<Int64>()
     }
 
+    public static func styled(styleName: String, fontFamily: String, fontSize: Float32,
+        style: TextEditStyle): TextEdit {
+        let props = StyleSheet.getDefault().resolve(styleName)
+        let ff = match (props.fontFamily) { case Some(f) => f; case None => fontFamily }
+        let fs = match (props.fontSize) { case Some(s) => s; case None => fontSize }
+        TextEdit(ff, fs, style)
+    }
+
     public func setParentHwnd(hwnd: CPointer<Byte>): Unit { this.parentHwnd = Some(hwnd) }
     public func setOnTextChanged(callback: (String) -> Unit): Unit { this.onTextChanged = Some(callback) }
     public func setWordWrap(wrap: Bool): Unit { this.wordWrap = wrap }

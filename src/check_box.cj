@@ -80,6 +80,15 @@ public class CheckBox <: Widget {
         this.measuredTextWidth = 0.0
     }
 
+    public static func styled(styleName: String, text: String, position: Position,
+        style: CheckBoxStyle, checked: Bool): CheckBox {
+        let props = StyleSheet.getDefault().resolve(styleName)
+        let ff = match (props.fontFamily) { case Some(f) => f; case None => "Microsoft YaHei" }
+        let fs = match (props.fontSize) { case Some(s) => s; case None => Float32(14.0) }
+        let sc = match (props.sizeScale) { case Some(s) => s; case None => SizeScale.scalable() }
+        CheckBox(text, position, ff, fs, sc, style, checked)
+    }
+
     public func setOnCheckedChanged(callback: (Bool) -> Unit): Unit {
         this.onCheckedChanged = Some<(Bool) -> Unit>(callback)
     }

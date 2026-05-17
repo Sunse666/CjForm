@@ -128,6 +128,15 @@ public class RadioButton <: Widget {
         this.measuredTextWidth = 0.0
     }
 
+    public static func styled(styleName: String, text: String, position: Position,
+        style: RadioButtonStyle): RadioButton {
+        let props = StyleSheet.getDefault().resolve(styleName)
+        let ff = match (props.fontFamily) { case Some(f) => f; case None => "Microsoft YaHei" }
+        let fs = match (props.fontSize) { case Some(s) => s; case None => Float32(14.0) }
+        let sc = match (props.sizeScale) { case Some(s) => s; case None => SizeScale.scalable() }
+        RadioButton(text, position, ff, fs, sc, style)
+    }
+
     public func setGroup(group: RadioGroup): Unit {
         this.group = Some<RadioGroup>(group)
     }

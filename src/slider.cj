@@ -72,6 +72,13 @@ public class Slider <: Widget {
         this.layoutFrame = None
     }
 
+    public static func styled(styleName: String, position: Position, width: Float32,
+        style: SliderStyle, min: Float32, max: Float32, value: Float32): Slider {
+        let props = StyleSheet.getDefault().resolve(styleName)
+        let sc = match (props.sizeScale) { case Some(s) => s; case None => SizeScale.scalable() }
+        Slider(position, width, sc, style, min, max, value)
+    }
+
     public func setOnValueChanged(callback: (Float32) -> Unit): Unit {
         this.onValueChanged = Some<(Float32) -> Unit>(callback)
     }

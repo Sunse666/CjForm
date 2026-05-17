@@ -121,6 +121,15 @@ public class TextBox <: Widget {
         this.echoChar = r'●'
     }
 
+    public static func styled(styleName: String, position: Position, width: Float32, height: Float32,
+        style: TextBoxStyle, placeholder: String): TextBox {
+        let props = StyleSheet.getDefault().resolve(styleName)
+        let ff = match (props.fontFamily) { case Some(f) => f; case None => "Microsoft YaHei" }
+        let fs = match (props.fontSize) { case Some(s) => s; case None => Float32(14.0) }
+        let sc = match (props.sizeScale) { case Some(s) => s; case None => SizeScale.scalable() }
+        TextBox(position, width, height, ff, fs, sc, style, placeholder)
+    }
+
     public func setPasswordMode(enabled: Bool): Unit { this.passwordMode = enabled }
     public func setEchoChar(ch: Rune): Unit { this.echoChar = ch }
 

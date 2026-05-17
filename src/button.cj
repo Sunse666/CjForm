@@ -35,6 +35,16 @@ public class Button <: Widget {
         this.pressAnim = AnimationState()
     }
 
+    public static func styled(styleName: String, text: String, position: Position,
+        width: Float32, height: Float32, style: ButtonStyle, onClick: () -> Unit): Button {
+        let props = StyleSheet.getDefault().resolve(styleName)
+        let ff = match (props.fontFamily) { case Some(f) => f; case None => "Microsoft YaHei" }
+        let fs = match (props.fontSize) { case Some(s) => s; case None => Float32(14.0) }
+        let sc = match (props.sizeScale) { case Some(s) => s; case None => SizeScale.scalable() }
+        let an = match (props.anchor) { case Some(a) => a; case None => Anchor.Center }
+        Button(text, position, width, height, ff, fs, sc, an, style, onClick)
+    }
+
     public func paint(canvas: Canvas, initialWidth: Float32, initialHeight: Float32, currentWidth: Float32, currentHeight: Float32): Unit {
         var left: Float32 = 0.0
         var top: Float32 = 0.0

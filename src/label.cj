@@ -38,6 +38,26 @@ public class Label <: Widget {
         this.isSecondary = isSecondary
     }
 
+    public static func styled(styleName: String, text: String, position: Position,
+        color: Color): Label {
+        let props = StyleSheet.getDefault().resolve(styleName)
+        let ff = match (props.fontFamily) { case Some(f) => f; case None => "Microsoft YaHei" }
+        let fs = match (props.fontSize) { case Some(s) => s; case None => Float32(14.0) }
+        let sc = match (props.sizeScale) { case Some(s) => s; case None => SizeScale.fixed() }
+        let an = match (props.anchor) { case Some(a) => a; case None => Anchor.CenterLeft }
+        Label(text, position, color, ff, fs, sc, an)
+    }
+
+    public static func styled(styleName: String, text: String, position: Position,
+        isSecondary: Bool): Label {
+        let props = StyleSheet.getDefault().resolve(styleName)
+        let ff = match (props.fontFamily) { case Some(f) => f; case None => "Microsoft YaHei" }
+        let fs = match (props.fontSize) { case Some(s) => s; case None => Float32(14.0) }
+        let sc = match (props.sizeScale) { case Some(s) => s; case None => SizeScale.fixed() }
+        let an = match (props.anchor) { case Some(a) => a; case None => Anchor.CenterLeft }
+        Label(text, position, ff, fs, sc, an, isSecondary)
+    }
+
     public func paint(canvas: Canvas, initialWidth: Float32, initialHeight: Float32, currentWidth: Float32, currentHeight: Float32): Unit {
         let actualColor = if (isThemeBased) {
             let c = Theme.colors()

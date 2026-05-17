@@ -1,0 +1,13 @@
+[package]
+  cjc-version = "1.0.5"
+  name = "example_toggle_switch"
+  version = "0.1.0"
+  target-dir = ""
+  output-type = "executable"
+  compile-option = "-Woff unused"
+  override-compile-option = ""
+  link-option = "-L../.. -lbridge --subsystem windows"
+  package-configuration = {}
+
+[dependencies]
+cjform = { path = "../.." }

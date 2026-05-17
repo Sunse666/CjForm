@@ -10,4 +10,4 @@
   package-configuration = {}
 
 [dependencies]
-cjform = { path = "../.." }
+cjform = { path = "../../cjform" }

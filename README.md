@@ -92,12 +92,42 @@ let btn = Button.styled("btn", "Click Me",
 
 ---
 
-## 运行控件演示
+## 控件示例
 
-```bash
-cd examples/gallery
-cjpm run
+`examples/` 下每个控件一个独立示例，用 PowerShell 运行：
+
+```powershell
+cd examples/button
+.\run.ps1
 ```
+
+或完整列表：
+
+| 示例 | 说明 |
+|------|------|
+| `button` | 三种按钮样式 |
+| `text_box` | 文本输入 / 密码 / 搜索 |
+| `text_edit` | 多行编辑器 |
+| `check_box` | 多选框 |
+| `radio_button` | 单选按钮组 |
+| `slider` | 滑块 |
+| `toggle_switch` | 开关 |
+| `progress_bar` | 进度条 |
+| `spin_box` | 数字步进器 |
+| `combo_box` | 下拉选择 |
+| `list_view` | 列表视图 |
+| `tree_view` | 树形视图 |
+| `table_view` | 表格视图 |
+| `tab_view` | 标签页 |
+| `scroll_area` | 滚动区域 |
+| `group_box` | 分组框 |
+| `split_pane` | 分割面板 |
+| `menu_bar` | 菜单栏 |
+| `context_menu` | 右键菜单 |
+| `dialog` | 对话框 |
+| `theme` | 主题切换 |
+| `stylesheet` | 样式表 |
+| `gallery` | 控件总览 |
 
 ---
 

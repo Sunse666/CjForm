@@ -1,15 +1,14 @@
 [package]
   cjc-version = "1.0.5"
-  name = "cjform"
-  description = "Cangjie Windows UI Library"
+  name = "gallery"
+  description = "CJForm widget gallery demo"
   version = "1.0.1"
   target-dir = ""
-  output-type = "static"
+  output-type = "executable"
   compile-option = "-Woff unused"
   override-compile-option = ""
-  link-option = ""
+  link-option = "-L.. -lbridge --subsystem windows"
   package-configuration = {}
-  homepage = "https://github.com/Sunse666/cjform"
-  license = "GPL-3.0"
 
 [dependencies]
+cjform = { path = ".." }

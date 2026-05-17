@@ -1,0 +1,14 @@
+[package]
+  cjc-version = "1.0.5"
+  name = "gallery"
+  description = "CJForm widget gallery demo"
+  version = "1.0.1"
+  target-dir = ""
+  output-type = "executable"
+  compile-option = "-Woff unused"
+  override-compile-option = ""
+  link-option = "-L../.. -lbridge --subsystem windows"
+  package-configuration = {}
+
+[dependencies]
+cjform = { path = "../../cjform" }

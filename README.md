@@ -10,6 +10,8 @@
 
 CJForm 是仓颉语言的 Windows 原生 UI 库。通过 C++ 桥接 Win32 API / GDI+，全部控件自绘。
 
+Clone 即用，无需额外配置。
+
 ## 环境要求
 
 - Windows 10 / 11 64 位
@@ -17,35 +19,37 @@ CJForm 是仓颉语言的 Windows 原生 UI 库。通过 C++ 桥接 Win32 API / 
 
 ## 快速开始
 
-### 1. 创建项目
-
 ```bash
-cjpm init
+git clone https://github.com/Sunse666/CjForm.git MyApp
+cd MyApp
+cjpm run
 ```
 
-### 2. 配置 cjpm.toml
+你会看到一个带按钮的窗口。`src/main.cj` 是你的代码入口，直接改它就行。
 
-```toml
-[package]
-  cjc-version = "1.0.5"
-  name = "myapp"
-  version = "0.1.0"
-  output-type = "executable"
-  link-option = "-L. -lbridge --subsystem windows"
+## 目录结构
 
-[dependencies]
-cjform = { git = "https://github.com/Sunse666/CjForm.git" }
+```
+MyApp/
+├── src/
+│   └── main.cj          # 你的代码
+├── cjform/              # CJForm 库（不需要动）
+│   ├── cjpm.toml
+│   └── src/
+│       ├── window.cj
+│       ├── button.cj
+│       ├── text_edit.cj
+│       ├── theme.cj
+│       ├── style_sheet.cj
+│       └── ...
+├── bridge.dll           # Win32 / GDI+ 桥接
+├── cjpm.toml
+└── README.md
 ```
 
-### 3. 下载 bridge.dll
+---
 
-PowerShell：
-
-```powershell
-Invoke-WebRequest -Uri "https://github.com/Sunse666/CjForm/raw/main/bridge.dll" -OutFile "bridge.dll"
-```
-
-### 4. 编写代码
+## 编写代码
 
 ```cj
 // src/main.cj
@@ -86,36 +90,13 @@ let btn = Button.styled("btn", "Click Me",
     ButtonStyle.fromTheme(), { => println("clicked!") })
 ```
 
-### 5. 运行
+---
+
+## 运行控件演示
 
 ```bash
+cd examples/gallery
 cjpm run
-```
-
----
-
-## 手动安装（离线 / 本地路径）
-
-```bash
-git clone https://github.com/Sunse666/CjForm.git
-```
-
-```toml
-# cjpm.toml
-[dependencies]
-cjform = { path = "../CjForm" }
-```
-
----
-
-## 目录结构
-
-```
-myapp/
-├── src/
-│   └── main.cj
-├── bridge.dll
-└── cjpm.toml
 ```
 
 ---
@@ -165,27 +146,6 @@ StyleSheet.getDefault()
 Canvas 渲染抽象
     ↓
 bridge.dll（C++ Win32 / GDI+ FFI）
-```
-
-## 源码目录
-
-```
-.
-├── src/                     # 库源码
-│   ├── window.cj
-│   ├── widget.cj
-│   ├── button.cj
-│   ├── text_edit.cj
-│   ├── theme.cj
-│   ├── style_sheet.cj
-│   └── ...
-├── gallery/                 # 控件演示程序
-│   ├── cjpm.toml
-│   └── src/main.cj
-├── bridge.dll
-├── bridge/                  # C++ 桥接源码
-├── cjpm.toml
-└── README.md
 ```
 
 ## 编译 bridge.dll（可选）

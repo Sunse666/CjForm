@@ -29,6 +29,7 @@ public class Window {
     private var contextMenu: Option<ContextMenu>
     private var overlayWidget: Option<Widget>
     private var mainWidget: Option<Widget>
+    private var onFileDrop: Option<(ArrayList<String>) -> Unit>
 
     public init(title: String, width: Int32, height: Int32) {
         this.title = title
@@ -56,6 +57,7 @@ public class Window {
         this.overlayWidget = None<Widget>
         this.contextMenu = None<ContextMenu>
         this.mainWidget = None<Widget>
+        this.onFileDrop = None<(ArrayList<String>) -> Unit>
 
         unsafe { bridge_gdip_init() }
 
@@ -63,6 +65,47 @@ public class Window {
         this.hwnd = unsafe { bridge_window_create(titleCStr, width, height, true, false, false) }
 
         unsafe { bridge_window_set_dark_mode(hwnd, Theme.getCurrent().isDark) }
+
+        loadWindowState()
+    }
+
+    public func setOnFileDrop(callback: (ArrayList<String>) -> Unit): Unit {
+        this.onFileDrop = Some<(ArrayList<String>) -> Unit>(callback)
+    }
+
+    private func loadWindowState(): Unit {
+        let ws = unsafe { LibC.mallocCString("window") }
+        let xk = unsafe { LibC.mallocCString("x") }
+        let yk = unsafe { LibC.mallocCString("y") }
+        let wk = unsafe { LibC.mallocCString("w") }
+        let hk = unsafe { LibC.mallocCString("h") }
+        let x = unsafe { bridge_config_read_int(ws, xk, -1) }
+        if (x >= 0) {
+            let y = unsafe { bridge_config_read_int(ws, yk, -1) }
+            if (y >= 0) {
+                let w = unsafe { bridge_config_read_int(ws, wk, -1) }
+                if (w > 0) {
+                    let h = unsafe { bridge_config_read_int(ws, hk, -1) }
+                    if (h > 0) {
+                        unsafe { bridge_window_set_pos(hwnd, x, y, w, h) }
+                    }
+                }
+            }
+        }
+    }
+
+    private func saveWindowState(): Unit {
+        let ws = unsafe { LibC.mallocCString("window") }
+        let x = unsafe { bridge_window_get_x(hwnd) }
+        let y = unsafe { bridge_window_get_y(hwnd) }
+        let w = unsafe { bridge_window_get_width(hwnd) }
+        let h = unsafe { bridge_window_get_height(hwnd) }
+        unsafe {
+            bridge_config_write_int(ws, LibC.mallocCString("x"), x)
+            bridge_config_write_int(ws, LibC.mallocCString("y"), y)
+            bridge_config_write_int(ws, LibC.mallocCString("w"), w)
+            bridge_config_write_int(ws, LibC.mallocCString("h"), h)
+        }
     }
 
     public func setResizable(resizable: Bool): Unit { this.isResizable = resizable }
@@ -208,6 +251,7 @@ public class Window {
             }
         }
 
+        saveWindowState()
         0
     }
 
@@ -271,6 +315,31 @@ public class Window {
                 }
             }
             render()
+        }
+
+        let hasDropEvent = unsafe { bridge_window_has_drop_event(hwnd) }
+        if (hasDropEvent) {
+            let count = unsafe { bridge_window_get_drop_count(hwnd) }
+            if (count > 0) {
+                let files = ArrayList<String>()
+                let buf = unsafe { LibC.malloc<Byte>(count: 512) }
+                let bufSize: Int32 = 512
+                for (i in 0..count) {
+                    let len = unsafe { bridge_window_get_drop_file(hwnd, i, buf, bufSize) }
+                    if (len > 0) {
+                        let cStr = unsafe { CString(buf) }
+                        files.add(cStr.toString())
+                    }
+                }
+                unsafe { LibC.free(buf) }
+                unsafe { bridge_window_clear_drop_event(hwnd) }
+                match (onFileDrop) {
+                    case Some(cb) => cb(files)
+                    case None => ()
+                }
+            } else {
+                unsafe { bridge_window_clear_drop_event(hwnd) }
+            }
         }
     }
 

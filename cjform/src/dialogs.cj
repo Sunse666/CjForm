@@ -60,6 +60,62 @@ public class ShortcutManager {
     }
 
     public func clear(): Unit { shortcuts = ArrayList<ShortcutEntry>() }
+
+    public func unregister(keyCode: UInt32, ctrl: Bool, shift: Bool, alt: Bool): Bool {
+        for (i in 0..shortcuts.size) {
+            let e = shortcuts[i]
+            if (e.keyCode == keyCode && e.ctrl == ctrl && e.shift == shift && e.alt == alt) {
+                let newList = ArrayList<ShortcutEntry>()
+                for (j in 0..shortcuts.size) {
+                    if (j != i) { newList.add(shortcuts[j]) }
+                }
+                shortcuts = newList
+                return true
+            }
+        }
+        false
+    }
+
+    public func saveConfig(): Unit {
+        for (i in 0..shortcuts.size) {
+            let e = shortcuts[i]
+            let sn = "shortcut_${i}"
+            let section = unsafe { LibC.mallocCString(sn) }
+            let kk = unsafe { LibC.mallocCString("keyCode") }
+            let ck = unsafe { LibC.mallocCString("ctrl") }
+            let sk = unsafe { LibC.mallocCString("shift") }
+            let ak = unsafe { LibC.mallocCString("alt") }
+            unsafe {
+                bridge_config_write_int(section, kk, Int32(e.keyCode))
+                bridge_config_write_int(section, ck, if (e.ctrl) { 1 } else { 0 })
+                bridge_config_write_int(section, sk, if (e.shift) { 1 } else { 0 })
+                bridge_config_write_int(section, ak, if (e.alt) { 1 } else { 0 })
+            }
+        }
+    }
+
+    public func loadConfig(actionMap: (String) -> Option<() -> Unit>): Unit {
+        var i: Int32 = 0
+        while (true) {
+            let sn = "shortcut_${i}"
+            let section = unsafe { LibC.mallocCString(sn) }
+            let kk = unsafe { LibC.mallocCString("keyCode") }
+            let ck = unsafe { LibC.mallocCString("ctrl") }
+            let sk = unsafe { LibC.mallocCString("shift") }
+            let ak = unsafe { LibC.mallocCString("alt") }
+            let keyCode = unsafe { bridge_config_read_int(section, kk, -1) }
+            if (keyCode < 0) { break }
+            let ctrl = unsafe { bridge_config_read_int(section, ck, 0) } != 0
+            let shift = unsafe { bridge_config_read_int(section, sk, 0) } != 0
+            let alt = unsafe { bridge_config_read_int(section, ak, 0) } != 0
+            let actionName = "shortcut_${i}"
+            match (actionMap(actionName)) {
+                case Some(action) => register(UInt32(keyCode), ctrl, shift, alt, action)
+                case None => ()
+            }
+            i = i + 1
+        }
+    }
 }
 
 public enum MessageBoxIcon {

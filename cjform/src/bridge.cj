@@ -130,3 +130,17 @@ foreign func bridge_gdip_free_image(img: CPointer<Byte>): Unit
 foreign func bridge_show_open_dialog(hwnd: CPointer<Byte>, title: CString, filter: CString, multiSelect: Bool): CPointer<Byte>
 foreign func bridge_show_save_dialog(hwnd: CPointer<Byte>, title: CString, filter: CString, defaultName: CString): CPointer<Byte>
 foreign func bridge_free_string(str: CPointer<Byte>): Unit
+
+foreign func bridge_window_has_drop_event(hwnd: CPointer<Byte>): Bool
+foreign func bridge_window_get_drop_count(hwnd: CPointer<Byte>): Int32
+foreign func bridge_window_get_drop_file(hwnd: CPointer<Byte>, index: Int32, buffer: CPointer<Byte>, bufferSize: Int32): Int32
+foreign func bridge_window_clear_drop_event(hwnd: CPointer<Byte>): Unit
+
+foreign func bridge_window_get_x(hwnd: CPointer<Byte>): Int32
+foreign func bridge_window_get_y(hwnd: CPointer<Byte>): Int32
+foreign func bridge_window_set_pos(hwnd: CPointer<Byte>, x: Int32, y: Int32, w: Int32, h: Int32): Unit
+
+foreign func bridge_config_write_string(section: CString, key: CString, value: CString): Unit
+foreign func bridge_config_read_string(section: CString, key: CString, defaultVal: CString, buffer: CPointer<Byte>, bufferSize: Int32): Int32
+foreign func bridge_config_write_int(section: CString, key: CString, value: Int32): Unit
+foreign func bridge_config_read_int(section: CString, key: CString, defaultVal: Int32): Int32

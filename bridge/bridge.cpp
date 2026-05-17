@@ -4,6 +4,7 @@
 #include <shobjidl.h>
 #include <stdbool.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 #pragma comment(lib, "gdiplus.lib")
 #pragma comment(lib, "dwmapi.lib")
@@ -43,6 +44,9 @@ typedef struct {
     bool isResizable;
     bool isAlwaysOnTop;
     bool isNoTitleBar;
+    bool hasDropEvent;
+    wchar_t* dropFileList;
+    int  dropFileCount;
 } WindowContext;
 
 static wchar_t* utf8_to_utf16(const char* utf8_str) {
@@ -85,6 +89,7 @@ static LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM l
         case WM_DESTROY:
             if (ctx) {
                 KillTimer(hwnd, 1);
+                if (ctx->dropFileList) free(ctx->dropFileList);
                 if (ctx->memBitmap) {
                     SelectObject(ctx->memDC, ctx->oldBitmap);
                     DeleteObject(ctx->memBitmap);
@@ -165,6 +170,29 @@ static LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM l
                 if (ctx->minHeight > 0) mmi->ptMinTrackSize.y = ctx->minHeight;
             }
             return 0;
+        case WM_DROPFILES:
+            if (ctx) {
+                HDROP hDrop = (HDROP)wParam;
+                ctx->dropFileCount = DragQueryFileW(hDrop, 0xFFFFFFFF, NULL, 0);
+                if (ctx->dropFileCount > 0) {
+                    size_t totalLen = 0;
+                    for (int i = 0; i < ctx->dropFileCount; i++) {
+                        totalLen += DragQueryFileW(hDrop, i, NULL, 0) + 1;
+                    }
+                    ctx->dropFileList = (wchar_t*)malloc((totalLen + 1) * sizeof(wchar_t));
+                    if (ctx->dropFileList) {
+                        wchar_t* ptr = ctx->dropFileList;
+                        for (int i = 0; i < ctx->dropFileCount; i++) {
+                            int len = DragQueryFileW(hDrop, i, ptr, totalLen - (ptr - ctx->dropFileList));
+                            ptr += len + 1;
+                        }
+                        *ptr = L'\0';
+                    }
+                }
+                DragFinish(hDrop);
+                ctx->hasDropEvent = true;
+            }
+            return 0;
     }
     return DefWindowProcW(hwnd, uMsg, wParam, lParam);
 }
@@ -199,7 +227,7 @@ __declspec(dllexport) HWND bridge_window_create(const char* title, int width, in
     if (!resizable && !noTitleBar) {
         dwStyle &= ~(WS_THICKFRAME | WS_MAXIMIZEBOX);
     }
-    DWORD dwExStyle = 0;
+    DWORD dwExStyle = WS_EX_ACCEPTFILES;
     if (alwaysOnTop) dwExStyle |= WS_EX_TOPMOST;
 
     HWND hwnd = CreateWindowExW(dwExStyle, L"CjFormWindow", tw,
@@ -207,6 +235,7 @@ __declspec(dllexport) HWND bridge_window_create(const char* title, int width, in
         width, height, NULL, NULL, GetModuleHandleW(NULL), NULL);
     if (tw != L"CjForm Window") free(tw);
     if (!hwnd) return NULL;
+    DragAcceptFiles(hwnd, TRUE);
 
     WindowContext* ctx = (WindowContext*)calloc(1, sizeof(WindowContext));
     ctx->hwnd = hwnd;
@@ -773,6 +802,97 @@ __declspec(dllexport) int bridge_window_get_mouse_wheel_y(HWND hwnd) {
 __declspec(dllexport) void bridge_window_clear_mouse_wheel_event(HWND hwnd) {
     WindowContext* ctx = (WindowContext*)GetPropW(hwnd, L"CjFormCtx");
     if (ctx) ctx->hasMouseWheelEvent = false;
+}
+
+__declspec(dllexport) bool bridge_window_has_drop_event(HWND hwnd) {
+    WindowContext* ctx = (WindowContext*)GetPropW(hwnd, L"CjFormCtx");
+    return ctx ? ctx->hasDropEvent : false;
+}
+__declspec(dllexport) int bridge_window_get_drop_count(HWND hwnd) {
+    WindowContext* ctx = (WindowContext*)GetPropW(hwnd, L"CjFormCtx");
+    return ctx ? ctx->dropFileCount : 0;
+}
+__declspec(dllexport) int bridge_window_get_drop_file(HWND hwnd, int index, char* buffer, int bufferSize) {
+    WindowContext* ctx = (WindowContext*)GetPropW(hwnd, L"CjFormCtx");
+    if (!ctx || !ctx->dropFileList || index < 0 || index >= ctx->dropFileCount || !buffer || bufferSize <= 0) {
+        buffer[0] = '\0'; return 0;
+    }
+    wchar_t* ptr = ctx->dropFileList;
+    for (int i = 0; i < index; i++) { ptr += wcslen(ptr) + 1; }
+    char* utf8 = utf16_to_utf8(ptr);
+    if (utf8) {
+        int len = (int)strlen(utf8);
+        int copyLen = len < bufferSize - 1 ? len : bufferSize - 1;
+        memcpy(buffer, utf8, copyLen); buffer[copyLen] = '\0';
+        free(utf8);
+        return copyLen;
+    }
+    buffer[0] = '\0'; return 0;
+}
+__declspec(dllexport) void bridge_window_clear_drop_event(HWND hwnd) {
+    WindowContext* ctx = (WindowContext*)GetPropW(hwnd, L"CjFormCtx");
+    if (ctx) {
+        ctx->hasDropEvent = false;
+        if (ctx->dropFileList) { free(ctx->dropFileList); ctx->dropFileList = NULL; }
+        ctx->dropFileCount = 0;
+    }
+}
+
+__declspec(dllexport) int bridge_window_get_x(HWND hwnd) {
+    RECT r; if (GetWindowRect(hwnd, &r)) return r.left; return 0;
+}
+__declspec(dllexport) int bridge_window_get_y(HWND hwnd) {
+    RECT r; if (GetWindowRect(hwnd, &r)) return r.top; return 0;
+}
+__declspec(dllexport) void bridge_window_set_pos(HWND hwnd, int x, int y, int w, int h) {
+    if (hwnd) SetWindowPos(hwnd, NULL, x, y, w, h, SWP_NOZORDER);
+}
+
+__declspec(dllexport) void bridge_config_write_string(const char* section, const char* key, const char* value) {
+    wchar_t* ws = utf8_to_utf16(section);
+    wchar_t* wk = utf8_to_utf16(key);
+    wchar_t* wv = utf8_to_utf16(value);
+    if (ws && wk && wv) {
+        WritePrivateProfileStringW(ws, wk, wv, L".\\cjform.ini");
+    }
+    if (ws) free(ws); if (wk) free(wk); if (wv) free(wv);
+}
+__declspec(dllexport) int bridge_config_read_string(const char* section, const char* key,
+    const char* defaultVal, char* buffer, int bufferSize) {
+    wchar_t* ws = utf8_to_utf16(section);
+    wchar_t* wk = utf8_to_utf16(key);
+    wchar_t* wd = utf8_to_utf16(defaultVal);
+    if (!ws || !wk || !buffer || bufferSize <= 0) {
+        if (ws) free(ws); if (wk) free(wk); if (wd) free(wd);
+        buffer[0] = '\0'; return 0;
+    }
+    wchar_t wbuf[4096];
+    GetPrivateProfileStringW(ws, wk, wd ? wd : L"", wbuf, 4096, L".\\cjform.ini");
+    char* utf8 = utf16_to_utf8(wbuf);
+    if (utf8) {
+        int len = (int)strlen(utf8);
+        int copyLen = len < bufferSize - 1 ? len : bufferSize - 1;
+        memcpy(buffer, utf8, copyLen); buffer[copyLen] = '\0';
+        free(utf8);
+        if (ws) free(ws); if (wk) free(wk); if (wd) free(wd);
+        return copyLen;
+    }
+    buffer[0] = '\0';
+    if (ws) free(ws); if (wk) free(wk); if (wd) free(wd);
+    return 0;
+}
+
+__declspec(dllexport) void bridge_config_write_int(const char* section, const char* key, int value) {
+    char buf[32];
+    snprintf(buf, sizeof(buf), "%d", value);
+    bridge_config_write_string(section, key, buf);
+}
+__declspec(dllexport) int bridge_config_read_int(const char* section, const char* key, int defaultVal) {
+    char buf[32];
+    char def[32];
+    snprintf(def, sizeof(def), "%d", defaultVal);
+    bridge_config_read_string(section, key, def, buf, sizeof(buf));
+    return atoi(buf);
 }
 
 }

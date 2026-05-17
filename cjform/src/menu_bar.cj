@@ -35,13 +35,58 @@ public class MenuItem {
     }
 }
 
+public struct MenuBarStyle {
+    public let backgroundColor: Color
+    public let itemHoverColor: Color
+    public let itemTextColor: Color
+    public let itemDisabledTextColor: Color
+    public let barHeight: Float32
+    public let itemHeight: Float32
+    public let itemPadding: Float32
+    public let isThemeBased: Bool
+
+    public init() {
+        this.backgroundColor = Color.WHITE
+        this.itemHoverColor = Color.WHITE
+        this.itemTextColor = Color.WHITE
+        this.itemDisabledTextColor = Color.WHITE
+        this.barHeight = 28.0
+        this.itemHeight = 24.0
+        this.itemPadding = 12.0
+        this.isThemeBased = false
+    }
+
+    public init(backgroundColor: Color, itemHoverColor: Color, itemTextColor: Color, itemDisabledTextColor: Color,
+        barHeight: Float32, itemHeight: Float32, itemPadding: Float32) {
+        this.backgroundColor = backgroundColor
+        this.itemHoverColor = itemHoverColor
+        this.itemTextColor = itemTextColor
+        this.itemDisabledTextColor = itemDisabledTextColor
+        this.barHeight = barHeight
+        this.itemHeight = itemHeight
+        this.itemPadding = itemPadding
+        this.isThemeBased = false
+    }
+
+    public init(isThemeBased: Bool) {
+        this.backgroundColor = Color.WHITE
+        this.itemHoverColor = Color.WHITE
+        this.itemTextColor = Color.WHITE
+        this.itemDisabledTextColor = Color.WHITE
+        this.barHeight = 28.0
+        this.itemHeight = 24.0
+        this.itemPadding = 12.0
+        this.isThemeBased = isThemeBased
+    }
+
+    public static func fromTheme(): MenuBarStyle { MenuBarStyle(true) }
+}
+
 public class MenuBar <: Widget {
     private var items: ArrayList<MenuItem>
     private var hoveredIndex: Int32
     private var openIndex: Int32
-    private var itemHeight: Float32
-    private var barHeight: Float32
-    private var itemPadding: Float32
+    private var style: MenuBarStyle
     private var layoutFrame: Option<LayoutFrame>
     private var parentWindow: Option<Window>
     private var itemPositions: ArrayList<LayoutFrame>
@@ -51,13 +96,26 @@ public class MenuBar <: Widget {
         this.items = ArrayList<MenuItem>()
         this.hoveredIndex = -1
         this.openIndex = -1
-        this.itemHeight = 24.0
-        this.barHeight = 28.0
-        this.itemPadding = 12.0
+        this.style = MenuBarStyle.fromTheme()
         this.layoutFrame = None
         this.parentWindow = None<Window>
         this.itemPositions = ArrayList<LayoutFrame>()
         this.needsReposition = true
+    }
+
+    public init(style: MenuBarStyle) {
+        this.items = ArrayList<MenuItem>()
+        this.hoveredIndex = -1
+        this.openIndex = -1
+        this.style = style
+        this.layoutFrame = None
+        this.parentWindow = None<Window>
+        this.itemPositions = ArrayList<LayoutFrame>()
+        this.needsReposition = true
+    }
+
+    public static func styled(styleName: String): MenuBar {
+        MenuBar(MenuBarStyle.fromTheme())
     }
 
     public func setParentWindow(win: Window): Unit { this.parentWindow = Some(win) }
@@ -72,18 +130,25 @@ public class MenuBar <: Widget {
         items.add(item)
     }
 
+    private func getBackgroundColor(): Color { if (style.isThemeBased) { Theme.colors().bgSecondary } else { style.backgroundColor } }
+    private func getItemHoverColor(): Color { if (style.isThemeBased) { Theme.colors().buttonHover } else { style.itemHoverColor } }
+    private func getItemTextColor(): Color { if (style.isThemeBased) { Theme.colors().textPrimary } else { style.itemTextColor } }
+    private func getItemDisabledTextColor(): Color { if (style.isThemeBased) { Theme.colors().textTertiary } else { style.itemDisabledTextColor } }
+    private func getBarHeight(): Float32 { if (style.isThemeBased) { 28.0 } else { style.barHeight } }
+    private func getItemHeight(): Float32 { if (style.isThemeBased) { 24.0 } else { style.itemHeight } }
+    private func getItemPadding(): Float32 { if (style.isThemeBased) { 12.0 } else { style.itemPadding } }
+
     public func paint(canvas: Canvas, initialWidth: Float32, initialHeight: Float32, currentWidth: Float32, currentHeight: Float32): Unit {
         let frameX = match (layoutFrame) { case Some(f) => f.x; case None => Float32(0.0) }
         let frameY = match (layoutFrame) { case Some(f) => f.y; case None => Float32(0.0) }
         let frameW = match (layoutFrame) { case Some(f) => f.width; case None => Float32(currentWidth) }
-        let c = Theme.colors()
-        canvas.fillRoundedRect(frameX, frameY, frameW, barHeight, 0.0, c.bgSecondary)
+        canvas.fillRoundedRect(frameX, frameY, frameW, getBarHeight(), 0.0, getBackgroundColor())
         if (needsReposition || itemPositions.size != items.size) {
             itemPositions = ArrayList<LayoutFrame>()
             var x: Float32 = frameX + 4.0
             for (item in items) {
-                let textW = canvas.measureTextWidth(item.text, "Microsoft YaHei", 13.0) + itemPadding * 2.0
-                itemPositions.add(LayoutFrame(x, frameY + 2.0, textW, barHeight - 4.0))
+                let textW = canvas.measureTextWidth(item.text, "Microsoft YaHei", 13.0) + getItemPadding() * 2.0
+                itemPositions.add(LayoutFrame(x, frameY + 2.0, textW, getBarHeight() - 4.0))
                 x = x + textW + 2.0
             }
             needsReposition = false
@@ -97,16 +162,16 @@ public class MenuBar <: Widget {
             let isOpen = idx == openIndex
 
             if (isHovered || isOpen) {
-                canvas.fillRoundedRect(pos.x, pos.y, pos.width, pos.height, 4.0, c.buttonHover)
+                canvas.fillRoundedRect(pos.x, pos.y, pos.width, pos.height, 4.0, getItemHoverColor())
             }
-            let textColor = if (item.isEnabled) { c.textPrimary } else { c.textTertiary }
-            canvas.drawTextAligned(pos.x + itemPadding, pos.y, pos.width - itemPadding * 2.0, pos.height, item.text, "Microsoft YaHei", 13.0, 1, textColor)
+            let textColor = if (item.isEnabled) { getItemTextColor() } else { getItemDisabledTextColor() }
+            canvas.drawTextAligned(pos.x + getItemPadding(), pos.y, pos.width - getItemPadding() * 2.0, pos.height, item.text, "Microsoft YaHei", 13.0, 1, textColor)
         }
     }
 
     public func hitTest(x: Float32, y: Float32, initialWidth: Float32, initialHeight: Float32, currentWidth: Float32, currentHeight: Float32): Bool {
         match (layoutFrame) {
-            case Some(f) => x >= f.x && x <= f.x + f.width && y >= f.y && y <= f.y + barHeight
+            case Some(f) => x >= f.x && x <= f.x + f.width && y >= f.y && y <= f.y + getBarHeight()
             case None => false
         }
     }
@@ -170,7 +235,7 @@ public class MenuBar <: Widget {
                 let pos = itemPositions[Int64(index)]
                 let (fx, fy) = getMenuFrame()
                 let drop = createDropDown(menu)
-                drop.setPosition(pos.x, fy + barHeight)
+                drop.setPosition(pos.x, fy + getBarHeight())
                 win.showOverlay(drop)
             case None => ()
         }
@@ -203,7 +268,7 @@ public class MenuBar <: Widget {
     public func updateAnimation(tickCount: Int64): Bool { false }
     public func findLeafAt(x: Float32, y: Float32): Widget { this }
     public func getLayoutMinWidth(): Float32 { 300.0 }
-    public func getLayoutMinHeight(): Float32 { barHeight }
+    public func getLayoutMinHeight(): Float32 { getBarHeight() }
     public func setLayoutFrame(frame: LayoutFrame): Unit { this.layoutFrame = Some(frame) }
     public func clearLayoutFrame(): Unit { this.layoutFrame = None }
     public func getLayoutFrame(): Option<LayoutFrame> { layoutFrame }

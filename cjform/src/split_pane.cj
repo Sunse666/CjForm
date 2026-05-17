@@ -1,5 +1,38 @@
 package cjform
 
+public struct SplitPaneStyle {
+    public let dividerColor: Color
+    public let dividerHoverColor: Color
+    public let dividerDragColor: Color
+    public let dividerSize: Float32
+    public let minPanelSize: Float32
+    public let isThemeBased: Bool
+
+    public init() {
+        this.dividerColor = Color.WHITE; this.dividerHoverColor = Color.WHITE
+        this.dividerDragColor = Color.WHITE
+        this.dividerSize = 6.0; this.minPanelSize = 80.0
+        this.isThemeBased = false
+    }
+
+    public init(dividerColor: Color, dividerHoverColor: Color, dividerDragColor: Color,
+        dividerSize: Float32, minPanelSize: Float32) {
+        this.dividerColor = dividerColor; this.dividerHoverColor = dividerHoverColor
+        this.dividerDragColor = dividerDragColor
+        this.dividerSize = dividerSize; this.minPanelSize = minPanelSize
+        this.isThemeBased = false
+    }
+
+    public init(isThemeBased: Bool) {
+        this.dividerColor = Color.WHITE; this.dividerHoverColor = Color.WHITE
+        this.dividerDragColor = Color.WHITE
+        this.dividerSize = 6.0; this.minPanelSize = 80.0
+        this.isThemeBased = isThemeBased
+    }
+
+    public static func fromTheme(): SplitPaneStyle { SplitPaneStyle(true) }
+}
+
 public class SplitPane <: Widget {
     private var left: Option<Widget>
     private var right: Option<Widget>
@@ -10,17 +43,36 @@ public class SplitPane <: Widget {
     private var isDragging: Bool
     private var hoverDivider: Bool
     private var layoutFrame: Option<LayoutFrame>
+    private var style: SplitPaneStyle
 
     public init(isVertical: Bool) {
+        this.style = SplitPaneStyle.fromTheme()
         this.left = None<Widget>
         this.right = None<Widget>
         this.isVertical = isVertical
         this.splitRatio = 0.5
-        this.minPanelSize = 80.0
-        this.dividerSize = 6.0
+        this.minPanelSize = style.minPanelSize
+        this.dividerSize = style.dividerSize
         this.isDragging = false
         this.hoverDivider = false
         this.layoutFrame = None
+    }
+
+    public init(isVertical: Bool, style: SplitPaneStyle) {
+        this.style = style
+        this.left = None<Widget>
+        this.right = None<Widget>
+        this.isVertical = isVertical
+        this.splitRatio = 0.5
+        this.minPanelSize = style.minPanelSize
+        this.dividerSize = style.dividerSize
+        this.isDragging = false
+        this.hoverDivider = false
+        this.layoutFrame = None
+    }
+
+    public static func styled(styleName: String, isVertical: Bool): SplitPane {
+        SplitPane(isVertical, SplitPaneStyle.fromTheme())
     }
 
     public func setLeft(widget: Widget): Unit { this.left = Some(widget) }
@@ -30,7 +82,6 @@ public class SplitPane <: Widget {
     public func paint(canvas: Canvas, initialWidth: Float32, initialHeight: Float32, currentWidth: Float32, currentHeight: Float32): Unit {
         let (x, y, w, h) = getFrame()
         if (w <= 0.0 || h <= 0.0) { return }
-        let c = Theme.colors()
 
         let splitPos = getSplitPosition(w, h)
         let halfD = dividerSize / 2.0
@@ -66,7 +117,11 @@ public class SplitPane <: Widget {
             divH = dividerSize
         }
 
-        let divColor = if (isDragging) { c.accent } else if (hoverDivider) { c.accentHover } else { c.border }
+        let divColor = if (style.isThemeBased) {
+            if (isDragging) { Theme.colors().accent } else if (hoverDivider) { Theme.colors().accentHover } else { Theme.colors().border }
+        } else {
+            if (isDragging) { style.dividerDragColor } else if (hoverDivider) { style.dividerHoverColor } else { style.dividerColor }
+        }
         canvas.fillRoundedRect(divX, divY, divW, divH, 2.0, divColor)
 
         match (left) {

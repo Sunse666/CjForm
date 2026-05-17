@@ -2,7 +2,72 @@ package cjform
 
 import std.collection.*
 
+public struct SpinBoxStyle {
+    public let backgroundColor: Color
+    public let focusedBorderColor: Color
+    public let borderColor: Color
+    public let textColor: Color
+    public let caretColor: Color
+    public let buttonColor: Color
+    public let buttonHoverColor: Color
+    public let buttonPressedColor: Color
+    public let arrowColor: Color
+    public let cornerRadius: Float32
+    public let borderWidth: Float32
+    public let isThemeBased: Bool
+
+    public init() {
+        this.backgroundColor = Color.WHITE
+        this.focusedBorderColor = Color.WHITE
+        this.borderColor = Color.WHITE
+        this.textColor = Color.WHITE
+        this.caretColor = Color.WHITE
+        this.buttonColor = Color.WHITE
+        this.buttonHoverColor = Color.WHITE
+        this.buttonPressedColor = Color.WHITE
+        this.arrowColor = Color.WHITE
+        this.cornerRadius = 4.0
+        this.borderWidth = 1.0
+        this.isThemeBased = false
+    }
+
+    public init(backgroundColor: Color, focusedBorderColor: Color, borderColor: Color,
+        textColor: Color, caretColor: Color, buttonColor: Color, buttonHoverColor: Color,
+        buttonPressedColor: Color, arrowColor: Color, cornerRadius: Float32, borderWidth: Float32) {
+        this.backgroundColor = backgroundColor
+        this.focusedBorderColor = focusedBorderColor
+        this.borderColor = borderColor
+        this.textColor = textColor
+        this.caretColor = caretColor
+        this.buttonColor = buttonColor
+        this.buttonHoverColor = buttonHoverColor
+        this.buttonPressedColor = buttonPressedColor
+        this.arrowColor = arrowColor
+        this.cornerRadius = cornerRadius
+        this.borderWidth = borderWidth
+        this.isThemeBased = false
+    }
+
+    public init(isThemeBased: Bool) {
+        this.backgroundColor = Color.WHITE
+        this.focusedBorderColor = Color.WHITE
+        this.borderColor = Color.WHITE
+        this.textColor = Color.WHITE
+        this.caretColor = Color.WHITE
+        this.buttonColor = Color.WHITE
+        this.buttonHoverColor = Color.WHITE
+        this.buttonPressedColor = Color.WHITE
+        this.arrowColor = Color.WHITE
+        this.cornerRadius = 4.0
+        this.borderWidth = 1.0
+        this.isThemeBased = isThemeBased
+    }
+
+    public static func fromTheme(): SpinBoxStyle { SpinBoxStyle(true) }
+}
+
 public class SpinBox <: Widget {
+    private var style: SpinBoxStyle
     private var value: Float32
     private var minValue: Float32
     private var maxValue: Float32
@@ -22,6 +87,7 @@ public class SpinBox <: Widget {
     private var lastBlinkTime: Int64
 
     public init(minV: Float32, maxV: Float32, initialV: Float32, step: Float32, isInt: Bool) {
+        this.style = SpinBoxStyle.fromTheme()
         this.minValue = minV
         this.maxValue = maxV
         this.value = initialV
@@ -41,6 +107,32 @@ public class SpinBox <: Widget {
         this.lastBlinkTime = 0
     }
 
+    public init(minV: Float32, maxV: Float32, initialV: Float32, step: Float32, isInt: Bool, style: SpinBoxStyle) {
+        this.style = style
+        this.minValue = minV
+        this.maxValue = maxV
+        this.value = initialV
+        this.step = step
+        this.isIntMode = isInt
+        this.isHovered = false
+        this.isFocused = false
+        this.hoverZone = 0
+        this.pressedZone = 0
+        this.repeatTimer = 0
+        this.repeatInterval = 80
+        this.layoutFrame = None
+        this.onValueChanged = None<(Float32) -> Unit>
+        this.isEditing = false
+        this.editBuffer = ""
+        this.caretVisible = true
+        this.lastBlinkTime = 0
+    }
+
+    public static func styled(styleName: String, minV: Float32, maxV: Float32,
+        initialV: Float32, step: Float32, isInt: Bool): SpinBox {
+        SpinBox(minV, maxV, initialV, step, isInt, SpinBoxStyle.fromTheme())
+    }
+
     public func setOnValueChanged(cb: (Float32) -> Unit): Unit { this.onValueChanged = Some(cb) }
     public func getValue(): Float32 { value }
 
@@ -49,9 +141,32 @@ public class SpinBox <: Widget {
         if (isIntMode) { Int64(value).toString() } else { value.toString() }
     }
 
+    private func getBgColor(): Color { if (style.isThemeBased) { Theme.colors().inputBg } else { style.backgroundColor } }
+    private func getBorderColor(): Color {
+        if (style.isThemeBased) {
+            if (isFocused || isEditing) { Theme.colors().borderFocused } else { Theme.colors().inputBorder }
+        } else {
+            if (isFocused || isEditing) { style.focusedBorderColor } else { style.borderColor }
+        }
+    }
+    private func getTextColor(): Color { if (style.isThemeBased) { Theme.colors().textPrimary } else { style.textColor } }
+    private func getCaretColor(): Color { if (style.isThemeBased) { Theme.colors().accent } else { style.caretColor } }
+    private func getButtonBg(z: Int32): Color {
+        if (style.isThemeBased) {
+            if (pressedZone == z) { Theme.colors().buttonPressed }
+            else if (hoverZone == z) { Theme.colors().buttonHover }
+            else { Theme.colors().bgTertiary }
+        } else {
+            if (pressedZone == z) { style.buttonPressedColor }
+            else if (hoverZone == z) { style.buttonHoverColor }
+            else { style.buttonColor }
+        }
+    }
+    private func getArrowColor(): Color { if (style.isThemeBased) { Theme.colors().textSecondary } else { style.arrowColor } }
+    private func getSeparatorColor(): Color { if (style.isThemeBased) { Theme.colors().inputBorder } else { style.borderColor } }
+
     public func paint(canvas: Canvas, initialWidth: Float32, initialHeight: Float32, currentWidth: Float32, currentHeight: Float32): Unit {
         let (x, y, w, h) = getFrame()
-        let c = Theme.colors()
         let btnW = h
 
         let now = unsafe { bridge_get_tick_count() }
@@ -60,29 +175,29 @@ public class SpinBox <: Widget {
             lastBlinkTime = now
         }
 
-        canvas.fillRoundedRect(x, y, w, h, Float32(4.0), c.inputBg)
-        canvas.drawRoundedRect(x, y, w, h, Float32(4.0), Float32(1.0),
-            if (isFocused || isEditing) { c.borderFocused } else { c.inputBorder })
+        canvas.fillRoundedRect(x, y, w, h, style.cornerRadius, getBgColor())
+        canvas.drawRoundedRect(x, y, w, h, style.cornerRadius, style.borderWidth, getBorderColor())
 
         let textX = x + Float32(8.0)
         let textW = w - btnW - Float32(16.0)
-        canvas.drawTextAligned(textX, y, textW, h, formatValue(), "Microsoft YaHei", Float32(13.0), 0, c.textPrimary)
+        canvas.drawTextAligned(textX, y, textW, h, formatValue(), "Microsoft YaHei", Float32(13.0), 0, getTextColor())
         if (isEditing && caretVisible) {
             let caretX = textX + canvas.measureTextWidth(editBuffer, "Microsoft YaHei", Float32(13.0))
-            canvas.drawLine(caretX, y + Float32(4.0), caretX, y + h - Float32(4.0), Float32(1.0), c.accent)
+            canvas.drawLine(caretX, y + Float32(4.0), caretX, y + h - Float32(4.0), Float32(1.0), getCaretColor())
         }
-        let upBg = if (pressedZone == 1) { c.buttonPressed } else if (hoverZone == 1) { c.buttonHover } else { c.bgTertiary }
+        let upBg = getButtonBg(1)
         canvas.fillRoundedRect(x + w - btnW, y, btnW, h / Float32(2.0), Float32(0.0), upBg)
         let cx = x + w - btnW / Float32(2.0)
         let cy = y + h / Float32(4.0)
-        canvas.drawLine(cx - Float32(4.0), cy + Float32(2.0), cx, cy - Float32(2.0), Float32(1.5), c.textSecondary)
-        canvas.drawLine(cx, cy - Float32(2.0), cx + Float32(4.0), cy + Float32(2.0), Float32(1.5), c.textSecondary)
-        let dnBg = if (pressedZone == 2) { c.buttonPressed } else if (hoverZone == 2) { c.buttonHover } else { c.bgTertiary }
+        let arrowC = getArrowColor()
+        canvas.drawLine(cx - Float32(4.0), cy + Float32(2.0), cx, cy - Float32(2.0), Float32(1.5), arrowC)
+        canvas.drawLine(cx, cy - Float32(2.0), cx + Float32(4.0), cy + Float32(2.0), Float32(1.5), arrowC)
+        let dnBg = getButtonBg(2)
         canvas.fillRoundedRect(x + w - btnW, y + h / Float32(2.0), btnW, h / Float32(2.0), Float32(0.0), dnBg)
         let cy2 = y + h * Float32(3.0) / Float32(4.0)
-        canvas.drawLine(cx - Float32(4.0), cy2 - Float32(2.0), cx, cy2 + Float32(2.0), Float32(1.5), c.textSecondary)
-        canvas.drawLine(cx, cy2 + Float32(2.0), cx + Float32(4.0), cy2 - Float32(2.0), Float32(1.5), c.textSecondary)
-        canvas.drawLine(x + w - btnW, y + Float32(2.0), x + w - btnW, y + h - Float32(2.0), Float32(1.0), c.inputBorder)
+        canvas.drawLine(cx - Float32(4.0), cy2 - Float32(2.0), cx, cy2 + Float32(2.0), Float32(1.5), arrowC)
+        canvas.drawLine(cx, cy2 + Float32(2.0), cx + Float32(4.0), cy2 - Float32(2.0), Float32(1.5), arrowC)
+        canvas.drawLine(x + w - btnW, y + Float32(2.0), x + w - btnW, y + h - Float32(2.0), Float32(1.0), getSeparatorColor())
     }
 
     public func hitTest(x: Float32, y: Float32, initialWidth: Float32, initialHeight: Float32, currentWidth: Float32, currentHeight: Float32): Bool {

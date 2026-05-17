@@ -1,5 +1,44 @@
 package cjform
 
+public struct ScrollAreaStyle {
+    public let scrollbarTrackColor: Color
+    public let scrollbarThumbColor: Color
+    public let scrollbarThumbHoverColor: Color
+    public let barThickness: Float32
+    public let barMinLength: Float32
+    public let isThemeBased: Bool
+
+    public init() {
+        this.scrollbarTrackColor = Color.WHITE
+        this.scrollbarThumbColor = Color.WHITE
+        this.scrollbarThumbHoverColor = Color.WHITE
+        this.barThickness = 10.0
+        this.barMinLength = 20.0
+        this.isThemeBased = false
+    }
+
+    public init(scrollbarTrackColor: Color, scrollbarThumbColor: Color, scrollbarThumbHoverColor: Color,
+        barThickness: Float32, barMinLength: Float32) {
+        this.scrollbarTrackColor = scrollbarTrackColor
+        this.scrollbarThumbColor = scrollbarThumbColor
+        this.scrollbarThumbHoverColor = scrollbarThumbHoverColor
+        this.barThickness = barThickness
+        this.barMinLength = barMinLength
+        this.isThemeBased = false
+    }
+
+    public init(isThemeBased: Bool) {
+        this.scrollbarTrackColor = Color.WHITE
+        this.scrollbarThumbColor = Color.WHITE
+        this.scrollbarThumbHoverColor = Color.WHITE
+        this.barThickness = 10.0
+        this.barMinLength = 20.0
+        this.isThemeBased = isThemeBased
+    }
+
+    public static func fromTheme(): ScrollAreaStyle { ScrollAreaStyle(true) }
+}
+
 public class ScrollArea <: Widget {
     private var content: Option<Widget>
     private var contentViewW: Float32
@@ -16,8 +55,7 @@ public class ScrollArea <: Widget {
     private var maxScrollY: Float32
     private var scrollAnimX: AnimationState
     private var scrollAnimY: AnimationState
-    private var barThickness: Float32
-    private var barMinLength: Float32
+    private var style: ScrollAreaStyle
     private var showBarY: Bool
     private var showBarX: Bool
     private var barOpacity: Float32
@@ -50,8 +88,7 @@ public class ScrollArea <: Widget {
         this.maxScrollY = 0.0
         this.scrollAnimX = AnimationState()
         this.scrollAnimY = AnimationState()
-        this.barThickness = 10.0
-        this.barMinLength = 20.0
+        this.style = ScrollAreaStyle.fromTheme()
         this.showBarY = false
         this.showBarX = false
         this.barOpacity = 0.3
@@ -67,6 +104,44 @@ public class ScrollArea <: Widget {
         this.hoveredBarY = false
         this.layoutFrame = None
         this.wheelScrollSpeed = 40.0
+    }
+
+    public init(style: ScrollAreaStyle) {
+        this.content = None<Widget>
+        this.contentViewW = 0.0
+        this.contentViewH = 0.0
+        this.viewportX = 0.0
+        this.viewportY = 0.0
+        this.viewportW = 0.0
+        this.viewportH = 0.0
+        this.scrollX = 0.0
+        this.scrollY = 0.0
+        this.targetScrollX = 0.0
+        this.targetScrollY = 0.0
+        this.maxScrollX = 0.0
+        this.maxScrollY = 0.0
+        this.scrollAnimX = AnimationState()
+        this.scrollAnimY = AnimationState()
+        this.style = style
+        this.showBarY = false
+        this.showBarX = false
+        this.barOpacity = 0.3
+        this.barOpacityAnim = AnimationState()
+        this.lastWheelTime = 0
+        this.draggingBarX = false
+        this.draggingBarY = false
+        this.dragStartScrollX = 0.0
+        this.dragStartScrollY = 0.0
+        this.dragStartMouseX = 0.0
+        this.dragStartMouseY = 0.0
+        this.hoveredBarX = false
+        this.hoveredBarY = false
+        this.layoutFrame = None
+        this.wheelScrollSpeed = 40.0
+    }
+
+    public static func styled(styleName: String): ScrollArea {
+        ScrollArea(ScrollAreaStyle.fromTheme())
     }
 
     public func setContent(widget: Widget): Unit {
@@ -160,7 +235,7 @@ public class ScrollArea <: Widget {
                 contentViewH = viewportH
         }
 
-        let prefBarThick = barThickness
+        let prefBarThick = getBarThickness()
         let needBarY = contentViewH > viewportH
         let needBarX = contentViewW > viewportW
         if (needBarX && !needBarY && contentViewH > viewportH - prefBarThick) {
@@ -199,10 +274,15 @@ public class ScrollArea <: Widget {
         paintScrollbars(canvas)
     }
 
+    private func getScrollbarTrackColor(): Color { if (style.isThemeBased) { Theme.colors().scrollbarTrack } else { style.scrollbarTrackColor } }
+    private func getScrollbarThumbColor(): Color { if (style.isThemeBased) { Theme.colors().scrollbarThumb } else { style.scrollbarThumbColor } }
+    private func getScrollbarThumbHoverColor(): Color { if (style.isThemeBased) { Theme.colors().scrollbarThumbHover } else { style.scrollbarThumbHoverColor } }
+    private func getBarThickness(): Float32 { if (style.isThemeBased) { 10.0 } else { style.barThickness } }
+    private func getBarMinLength(): Float32 { if (style.isThemeBased) { 20.0 } else { style.barMinLength } }
+
     private func paintScrollbars(canvas: Canvas): Unit {
-        let c = Theme.colors()
-        let vpW = if (showBarY) { viewportW - barThickness } else { viewportW }
-        let vpH = if (showBarX) { viewportH - barThickness } else { viewportH }
+        let vpW = if (showBarY) { viewportW - getBarThickness() } else { viewportW }
+        let vpH = if (showBarX) { viewportH - getBarThickness() } else { viewportH }
 
         let trackAlpha = UInt8(barOpacity * 255.0)
         if (trackAlpha == 0) { return }
@@ -210,34 +290,40 @@ public class ScrollArea <: Widget {
         if (showBarY && maxScrollY > 0.0) {
             let barX = viewportX + vpW
             let barH = viewportH
-            let thumbH = clampF(barH * vpH / contentViewH, barMinLength, barH - 4.0)
+            let thumbH = clampF(barH * vpH / contentViewH, getBarMinLength(), barH - 4.0)
             let thumbTravel = barH - thumbH - 4.0
             let thumbY = if (maxScrollY > 0.0) { viewportY + 2.0 + (scrollY / maxScrollY) * thumbTravel } else { viewportY + 2.0 }
-            canvas.fillRoundedRect(barX + 2.0, viewportY, barThickness - 4.0, barH, 4.0,
-                Color.rgba(c.scrollbarTrack.r, c.scrollbarTrack.g, c.scrollbarTrack.b, trackAlpha))
+            let trackC = getScrollbarTrackColor()
+            canvas.fillRoundedRect(barX + 2.0, viewportY, getBarThickness() - 4.0, barH, 4.0,
+                Color.rgba(trackC.r, trackC.g, trackC.b, trackAlpha))
             let thumbColor = if (draggingBarY || hoveredBarY) {
-                Color.rgba(c.scrollbarThumbHover.r, c.scrollbarThumbHover.g, c.scrollbarThumbHover.b, trackAlpha)
+                let hoverC = getScrollbarThumbHoverColor()
+                Color.rgba(hoverC.r, hoverC.g, hoverC.b, trackAlpha)
             } else {
-                Color.rgba(c.scrollbarThumb.r, c.scrollbarThumb.g, c.scrollbarThumb.b, trackAlpha)
+                let thumbC = getScrollbarThumbColor()
+                Color.rgba(thumbC.r, thumbC.g, thumbC.b, trackAlpha)
             }
-            canvas.fillRoundedRect(barX + 2.0, thumbY, barThickness - 4.0, thumbH, 4.0, thumbColor)
+            canvas.fillRoundedRect(barX + 2.0, thumbY, getBarThickness() - 4.0, thumbH, 4.0, thumbColor)
         }
 
         if (showBarX && maxScrollX > 0.0) {
             let barY = viewportY + vpH
             let barW = viewportW
-            let thumbW = clampF(barW * vpW / contentViewW, barMinLength, barW - 4.0)
+            let thumbW = clampF(barW * vpW / contentViewW, getBarMinLength(), barW - 4.0)
             let thumbTravel = barW - thumbW - 4.0
             let thumbX = if (maxScrollX > 0.0) { viewportX + 2.0 + (scrollX / maxScrollX) * thumbTravel } else { viewportX + 2.0 }
 
-            canvas.fillRoundedRect(viewportX, barY + 2.0, barW, barThickness - 4.0, 4.0,
-                Color.rgba(c.scrollbarTrack.r, c.scrollbarTrack.g, c.scrollbarTrack.b, trackAlpha))
+            let trackC = getScrollbarTrackColor()
+            canvas.fillRoundedRect(viewportX, barY + 2.0, barW, getBarThickness() - 4.0, 4.0,
+                Color.rgba(trackC.r, trackC.g, trackC.b, trackAlpha))
             let thumbColor = if (draggingBarX || hoveredBarX) {
-                Color.rgba(c.scrollbarThumbHover.r, c.scrollbarThumbHover.g, c.scrollbarThumbHover.b, trackAlpha)
+                let hoverC = getScrollbarThumbHoverColor()
+                Color.rgba(hoverC.r, hoverC.g, hoverC.b, trackAlpha)
             } else {
-                Color.rgba(c.scrollbarThumb.r, c.scrollbarThumb.g, c.scrollbarThumb.b, trackAlpha)
+                let thumbC = getScrollbarThumbColor()
+                Color.rgba(thumbC.r, thumbC.g, thumbC.b, trackAlpha)
             }
-            canvas.fillRoundedRect(thumbX, barY + 2.0, thumbW, barThickness - 4.0, 4.0, thumbColor)
+            canvas.fillRoundedRect(thumbX, barY + 2.0, thumbW, getBarThickness() - 4.0, 4.0, thumbColor)
         }
     }
 
@@ -277,14 +363,14 @@ public class ScrollArea <: Widget {
     private func handleMouseDownEvent(event: Event): Bool {
         match (event.mouseEvent) {
             case Some(me) =>
-                let vpW = if (showBarY) { viewportW - barThickness } else { viewportW }
-                let vpH = if (showBarX) { viewportH - barThickness } else { viewportH }
+                let vpW = if (showBarY) { viewportW - getBarThickness() } else { viewportW }
+                let vpH = if (showBarX) { viewportH - getBarThickness() } else { viewportH }
 
                 if (showBarY && maxScrollY > 0.0) {
                     let barX = viewportX + vpW
-                    if (me.x >= barX && me.x <= barX + barThickness && me.y >= viewportY && me.y <= viewportY + viewportH) {
+                    if (me.x >= barX && me.x <= barX + getBarThickness() && me.y >= viewportY && me.y <= viewportY + viewportH) {
                         let barH = viewportH
-                        let thumbH = clampF(barH * vpH / contentViewH, barMinLength, barH - 4.0)
+                        let thumbH = clampF(barH * vpH / contentViewH, getBarMinLength(), barH - 4.0)
                         let thumbTravel = barH - thumbH - 4.0
                         let thumbY = viewportY + 2.0 + (scrollY / maxScrollY) * thumbTravel
                         if (me.y >= thumbY && me.y <= thumbY + thumbH) {
@@ -301,9 +387,9 @@ public class ScrollArea <: Widget {
 
                 if (showBarX && maxScrollX > 0.0) {
                     let barY = viewportY + vpH
-                    if (me.x >= viewportX && me.x <= viewportX + viewportW && me.y >= barY && me.y <= barY + barThickness) {
+                    if (me.x >= viewportX && me.x <= viewportX + viewportW && me.y >= barY && me.y <= barY + getBarThickness()) {
                         let barW = viewportW
-                        let thumbW = clampF(barW * vpW / contentViewW, barMinLength, barW - 4.0)
+                        let thumbW = clampF(barW * vpW / contentViewW, getBarMinLength(), barW - 4.0)
                         let thumbTravel = barW - thumbW - 4.0
                         let thumbX = viewportX + 2.0 + (scrollX / maxScrollX) * thumbTravel
                         if (me.x >= thumbX && me.x <= thumbX + thumbW) {
@@ -327,12 +413,12 @@ public class ScrollArea <: Widget {
     private func handleMouseMoveEvent(event: Event): Bool {
         match (event.mouseEvent) {
             case Some(me) =>
-                let vpW = if (showBarY) { viewportW - barThickness } else { viewportW }
-                let vpH = if (showBarX) { viewportH - barThickness } else { viewportH }
+                let vpW = if (showBarY) { viewportW - getBarThickness() } else { viewportW }
+                let vpH = if (showBarX) { viewportH - getBarThickness() } else { viewportH }
 
                 if (draggingBarY) {
                     let barH = viewportH
-                    let thumbH = clampF(barH * vpH / contentViewH, barMinLength, barH - 4.0)
+                    let thumbH = clampF(barH * vpH / contentViewH, getBarMinLength(), barH - 4.0)
                     let thumbTravel = barH - thumbH - 4.0
                     if (thumbTravel > 0.0) {
                         let delta = me.y - dragStartMouseY
@@ -347,7 +433,7 @@ public class ScrollArea <: Widget {
 
                 if (draggingBarX) {
                     let barW = viewportW
-                    let thumbW = clampF(barW * vpW / contentViewW, barMinLength, barW - 4.0)
+                    let thumbW = clampF(barW * vpW / contentViewW, getBarMinLength(), barW - 4.0)
                     let thumbTravel = barW - thumbW - 4.0
                     if (thumbTravel > 0.0) {
                         let delta = me.x - dragStartMouseX
@@ -362,11 +448,11 @@ public class ScrollArea <: Widget {
 
                 if (showBarY && maxScrollY > 0.0) {
                     let barX = viewportX + vpW
-                    hoveredBarY = me.x >= barX && me.x <= barX + barThickness && me.y >= viewportY && me.y <= viewportY + viewportH
+                    hoveredBarY = me.x >= barX && me.x <= barX + getBarThickness() && me.y >= viewportY && me.y <= viewportY + viewportH
                 }
                 if (showBarX && maxScrollX > 0.0) {
                     let barY = viewportY + vpH
-                    hoveredBarX = me.x >= viewportX && me.x <= viewportX + viewportW && me.y >= barY && me.y <= barY + barThickness
+                    hoveredBarX = me.x >= viewportX && me.x <= viewportX + viewportW && me.y >= barY && me.y <= barY + getBarThickness()
                 }
 
                 routeToContent(event)

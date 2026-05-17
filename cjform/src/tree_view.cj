@@ -24,6 +24,58 @@ public class TreeNode {
     public func hasChildren(): Bool { children.size > 0 }
 }
 
+public struct TreeViewStyle {
+    public let selectionColor: Color
+    public let hoverColor: Color
+    public let arrowColor: Color
+    public let selectedTextColor: Color
+    public let normalTextColor: Color
+    public let scrollbarTrackColor: Color
+    public let scrollbarThumbColor: Color
+    public let scrollbarThumbHoverColor: Color
+    public let isThemeBased: Bool
+
+    public init() {
+        this.selectionColor = Color.WHITE
+        this.hoverColor = Color.WHITE
+        this.arrowColor = Color.WHITE
+        this.selectedTextColor = Color.WHITE
+        this.normalTextColor = Color.WHITE
+        this.scrollbarTrackColor = Color.WHITE
+        this.scrollbarThumbColor = Color.WHITE
+        this.scrollbarThumbHoverColor = Color.WHITE
+        this.isThemeBased = false
+    }
+
+    public init(selectionColor: Color, hoverColor: Color, arrowColor: Color,
+        selectedTextColor: Color, normalTextColor: Color, scrollbarTrackColor: Color,
+        scrollbarThumbColor: Color, scrollbarThumbHoverColor: Color) {
+        this.selectionColor = selectionColor
+        this.hoverColor = hoverColor
+        this.arrowColor = arrowColor
+        this.selectedTextColor = selectedTextColor
+        this.normalTextColor = normalTextColor
+        this.scrollbarTrackColor = scrollbarTrackColor
+        this.scrollbarThumbColor = scrollbarThumbColor
+        this.scrollbarThumbHoverColor = scrollbarThumbHoverColor
+        this.isThemeBased = false
+    }
+
+    public init(isThemeBased: Bool) {
+        this.selectionColor = Color.WHITE
+        this.hoverColor = Color.WHITE
+        this.arrowColor = Color.WHITE
+        this.selectedTextColor = Color.WHITE
+        this.normalTextColor = Color.WHITE
+        this.scrollbarTrackColor = Color.WHITE
+        this.scrollbarThumbColor = Color.WHITE
+        this.scrollbarThumbHoverColor = Color.WHITE
+        this.isThemeBased = isThemeBased
+    }
+
+    public static func fromTheme(): TreeViewStyle { TreeViewStyle(true) }
+}
+
 public class TreeView <: Widget {
     private var rootNodes: ArrayList<TreeNode>
     private var visibleNodes: ArrayList<TreeNode>
@@ -52,6 +104,7 @@ public class TreeView <: Widget {
     private var viewportW: Float32
     private var viewportH: Float32
     private var wheelScrollSpeed: Float32
+    private var style: TreeViewStyle
 
     public init() {
         this.rootNodes = ArrayList<TreeNode>()
@@ -81,6 +134,42 @@ public class TreeView <: Widget {
         this.viewportW = 0.0
         this.viewportH = 0.0
         this.wheelScrollSpeed = 40.0
+        this.style = TreeViewStyle.fromTheme()
+    }
+
+    public init(style: TreeViewStyle) {
+        this.rootNodes = ArrayList<TreeNode>()
+        this.visibleNodes = ArrayList<TreeNode>()
+        this.nodeHeight = 24.0
+        this.indentWidth = 20.0
+        this.toggleSize = 10.0
+        this.needsFlatten = true
+        this.scrollOffset = 0.0
+        this.targetScrollOffset = 0.0
+        this.maxScrollOffset = 0.0
+        this.scrollAnim = AnimationState()
+        this.barThickness = 10.0
+        this.barMinLength = 20.0
+        this.showBar = false
+        this.barOpacity = 0.3
+        this.barOpacityAnim = AnimationState()
+        this.lastWheelTime = 0
+        this.draggingBar = false
+        this.dragStartScroll = 0.0
+        this.dragStartMouseY = 0.0
+        this.hoveredBar = false
+        this.selectedNodeIndex = -1
+        this.onSelectionChanged = None<(Int32) -> Unit>
+        this.hoveredNodeIndex = -1
+        this.layoutFrame = None
+        this.viewportW = 0.0
+        this.viewportH = 0.0
+        this.wheelScrollSpeed = 40.0
+        this.style = style
+    }
+
+    public static func styled(styleName: String): TreeView {
+        TreeView(TreeViewStyle.fromTheme())
     }
 
     public func addNode(node: TreeNode): Unit {
@@ -131,12 +220,20 @@ public class TreeView <: Widget {
         lastWheelTime = unsafe { bridge_get_tick_count() }
     }
 
+    private func getSelectionColor(): Color { if (style.isThemeBased) { Theme.colors().accent } else { style.selectionColor } }
+    private func getHoverColor(): Color { if (style.isThemeBased) { Theme.colors().border } else { style.hoverColor } }
+    private func getArrowColor(): Color { if (style.isThemeBased) { Theme.colors().textSecondary } else { style.arrowColor } }
+    private func getSelectedTextColor(): Color { if (style.isThemeBased) { Theme.colors().accent } else { style.selectedTextColor } }
+    private func getNormalTextColor(): Color { if (style.isThemeBased) { Theme.colors().textPrimary } else { style.normalTextColor } }
+    private func getScrollbarTrackColor(): Color { if (style.isThemeBased) { Theme.colors().scrollbarTrack } else { style.scrollbarTrackColor } }
+    private func getScrollbarThumbColor(): Color { if (style.isThemeBased) { Theme.colors().scrollbarThumb } else { style.scrollbarThumbColor } }
+    private func getScrollbarThumbHoverColor(): Color { if (style.isThemeBased) { Theme.colors().scrollbarThumbHover } else { style.scrollbarThumbHoverColor } }
+
     public func paint(canvas: Canvas, initialWidth: Float32, initialHeight: Float32, currentWidth: Float32, currentHeight: Float32): Unit {
         let frameX = match (layoutFrame) { case Some(f) => f.x; case None => Float32(0.0) }
         let frameY = match (layoutFrame) { case Some(f) => f.y; case None => Float32(0.0) }
         viewportW = match (layoutFrame) { case Some(f) => f.width; case None => Float32(currentWidth) }
         viewportH = match (layoutFrame) { case Some(f) => f.height; case None => Float32(currentHeight) }
-        let c = Theme.colors()
 
         if (needsFlatten) {
             visibleNodes = flattenNodes(rootNodes)
@@ -161,9 +258,11 @@ public class TreeView <: Widget {
             let x = frameX + Float32(node.depth) * indentWidth + 8.0
 
             if (Int32(i) == selectedNodeIndex) {
-                canvas.fillRoundedRect(frameX + 2.0, y, vpW - 4.0, nodeHeight, 4.0, Color.rgba(c.accent.r, c.accent.g, c.accent.b, 40))
+                let sel = getSelectionColor()
+                canvas.fillRoundedRect(frameX + 2.0, y, vpW - 4.0, nodeHeight, 4.0, Color.rgba(sel.r, sel.g, sel.b, 40))
             } else if (Int32(i) == hoveredNodeIndex) {
-                canvas.fillRoundedRect(frameX + 2.0, y, vpW - 4.0, nodeHeight, 4.0, Color.rgba(c.border.r, c.border.g, c.border.b, 30))
+                let hov = getHoverColor()
+                canvas.fillRoundedRect(frameX + 2.0, y, vpW - 4.0, nodeHeight, 4.0, Color.rgba(hov.r, hov.g, hov.b, 30))
             }
 
             if (node.hasChildren()) {
@@ -171,15 +270,15 @@ public class TreeView <: Widget {
                 let ty = y + (nodeHeight - toggleSize) / 2.0
                 let half = toggleSize / 2.0
                 if (node.expanded) {
-                    canvas.drawLine(tx, ty, tx + half, ty + toggleSize, 1.5, c.textSecondary)
-                    canvas.drawLine(tx + half, ty + toggleSize, tx + toggleSize, ty, 1.5, c.textSecondary)
+                    canvas.drawLine(tx, ty, tx + half, ty + toggleSize, 1.5, getArrowColor())
+                    canvas.drawLine(tx + half, ty + toggleSize, tx + toggleSize, ty, 1.5, getArrowColor())
                 } else {
-                    canvas.drawLine(tx, ty, tx + toggleSize, ty + half, 1.5, c.textSecondary)
-                    canvas.drawLine(tx + toggleSize, ty + half, tx, ty + toggleSize, 1.5, c.textSecondary)
+                    canvas.drawLine(tx, ty, tx + toggleSize, ty + half, 1.5, getArrowColor())
+                    canvas.drawLine(tx + toggleSize, ty + half, tx, ty + toggleSize, 1.5, getArrowColor())
                 }
             }
 
-            let textColor = if (Int32(i) == selectedNodeIndex) { c.accent } else { c.textPrimary }
+            let textColor = if (Int32(i) == selectedNodeIndex) { getSelectedTextColor() } else { getNormalTextColor() }
             canvas.drawText(x, y + (nodeHeight - 14.0) / 2.0, node.label, "Microsoft YaHei", 14.0, textColor)
         }
 
@@ -205,7 +304,6 @@ public class TreeView <: Widget {
 
     private func paintScrollbar(canvas: Canvas, frameX: Float32, frameY: Float32): Unit {
         if (!showBar || maxScrollOffset <= 0.0) { return }
-        let c = Theme.colors()
         let alpha = UInt8(barOpacity * 255.0)
         if (alpha == 0) { return }
 
@@ -216,12 +314,15 @@ public class TreeView <: Widget {
         let thumbTravel = barH - thumbH - 4.0
         let thumbY = if (maxScrollOffset > 0.0) { frameY + 2.0 + (scrollOffset / maxScrollOffset) * thumbTravel } else { frameY + 2.0 }
 
+        let trackC = getScrollbarTrackColor()
         canvas.fillRoundedRect(barX + 2.0, frameY, barThickness - 4.0, barH, 4.0,
-            Color.rgba(c.scrollbarTrack.r, c.scrollbarTrack.g, c.scrollbarTrack.b, alpha))
+            Color.rgba(trackC.r, trackC.g, trackC.b, alpha))
         let thumbColor = if (draggingBar || hoveredBar) {
-            Color.rgba(c.scrollbarThumbHover.r, c.scrollbarThumbHover.g, c.scrollbarThumbHover.b, alpha)
+            let hoverC = getScrollbarThumbHoverColor()
+            Color.rgba(hoverC.r, hoverC.g, hoverC.b, alpha)
         } else {
-            Color.rgba(c.scrollbarThumb.r, c.scrollbarThumb.g, c.scrollbarThumb.b, alpha)
+            let thumbC = getScrollbarThumbColor()
+            Color.rgba(thumbC.r, thumbC.g, thumbC.b, alpha)
         }
         canvas.fillRoundedRect(barX + 2.0, thumbY, barThickness - 4.0, thumbH, 4.0, thumbColor)
     }

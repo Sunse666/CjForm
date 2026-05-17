@@ -18,6 +18,71 @@ public class TableColumn {
     }
 }
 
+public struct TableViewStyle {
+    public let headerBgColor: Color
+    public let headerTextColor: Color
+    public let sortArrowColor: Color
+    public let gridLineColor: Color
+    public let selectedBgColor: Color
+    public let rowEvenColor: Color
+    public let rowOddColor: Color
+    public let cellTextColor: Color
+    public let scrollbarTrackColor: Color
+    public let scrollbarThumbColor: Color
+    public let scrollbarThumbHoverColor: Color
+    public let isThemeBased: Bool
+
+    public init() {
+        this.headerBgColor = Color.WHITE
+        this.headerTextColor = Color.WHITE
+        this.sortArrowColor = Color.WHITE
+        this.gridLineColor = Color.WHITE
+        this.selectedBgColor = Color.WHITE
+        this.rowEvenColor = Color.WHITE
+        this.rowOddColor = Color.WHITE
+        this.cellTextColor = Color.WHITE
+        this.scrollbarTrackColor = Color.WHITE
+        this.scrollbarThumbColor = Color.WHITE
+        this.scrollbarThumbHoverColor = Color.WHITE
+        this.isThemeBased = false
+    }
+
+    public init(headerBgColor: Color, headerTextColor: Color, sortArrowColor: Color,
+        gridLineColor: Color, selectedBgColor: Color, rowEvenColor: Color, rowOddColor: Color,
+        cellTextColor: Color, scrollbarTrackColor: Color, scrollbarThumbColor: Color,
+        scrollbarThumbHoverColor: Color) {
+        this.headerBgColor = headerBgColor
+        this.headerTextColor = headerTextColor
+        this.sortArrowColor = sortArrowColor
+        this.gridLineColor = gridLineColor
+        this.selectedBgColor = selectedBgColor
+        this.rowEvenColor = rowEvenColor
+        this.rowOddColor = rowOddColor
+        this.cellTextColor = cellTextColor
+        this.scrollbarTrackColor = scrollbarTrackColor
+        this.scrollbarThumbColor = scrollbarThumbColor
+        this.scrollbarThumbHoverColor = scrollbarThumbHoverColor
+        this.isThemeBased = false
+    }
+
+    public init(isThemeBased: Bool) {
+        this.headerBgColor = Color.WHITE
+        this.headerTextColor = Color.WHITE
+        this.sortArrowColor = Color.WHITE
+        this.gridLineColor = Color.WHITE
+        this.selectedBgColor = Color.WHITE
+        this.rowEvenColor = Color.WHITE
+        this.rowOddColor = Color.WHITE
+        this.cellTextColor = Color.WHITE
+        this.scrollbarTrackColor = Color.WHITE
+        this.scrollbarThumbColor = Color.WHITE
+        this.scrollbarThumbHoverColor = Color.WHITE
+        this.isThemeBased = isThemeBased
+    }
+
+    public static func fromTheme(): TableViewStyle { TableViewStyle(true) }
+}
+
 public class TableView <: Widget {
     private var columns: ArrayList<TableColumn>
     private var dataRows: ArrayList<ArrayList<String>>
@@ -60,6 +125,7 @@ public class TableView <: Widget {
     private var viewportW: Float32
     private var viewportH: Float32
     private var wheelScrollSpeed: Float32
+    private var style: TableViewStyle
 
     public init() {
         this.columns = ArrayList<TableColumn>()
@@ -103,6 +169,56 @@ public class TableView <: Widget {
         this.viewportW = 0.0
         this.viewportH = 0.0
         this.wheelScrollSpeed = 40.0
+        this.style = TableViewStyle.fromTheme()
+    }
+
+    public init(style: TableViewStyle) {
+        this.columns = ArrayList<TableColumn>()
+        this.dataRows = ArrayList<ArrayList<String>>()
+        this.headerHeight = 30.0
+        this.rowHeight = 24.0
+        this.minColumnWidth = 40.0
+        this.sortColumn = -1
+        this.sortAscending = true
+        this.resizingColumn = -1
+        this.resizeStartX = 0.0
+        this.resizeStartWidth = 0.0
+        this.hoveredDivider = -1
+        this.resizeHandleWidth = 4.0
+        this.scrollX = 0.0
+        this.scrollY = 0.0
+        this.targetScrollX = 0.0
+        this.targetScrollY = 0.0
+        this.maxScrollX = 0.0
+        this.maxScrollY = 0.0
+        this.scrollAnimX = AnimationState()
+        this.scrollAnimY = AnimationState()
+        this.barThickness = 10.0
+        this.barMinLength = 20.0
+        this.showBarX = false
+        this.showBarY = false
+        this.barOpacity = 0.3
+        this.barOpacityAnim = AnimationState()
+        this.lastWheelTime = 0
+        this.draggingBarX = false
+        this.draggingBarY = false
+        this.dragStartScrollX = 0.0
+        this.dragStartScrollY = 0.0
+        this.dragStartMX = 0.0
+        this.dragStartMY = 0.0
+        this.hoveredBarX = false
+        this.hoveredBarY = false
+        this.selectedRow = -1
+        this.onSelectionChanged = None<(Int32) -> Unit>
+        this.layoutFrame = None
+        this.viewportW = 0.0
+        this.viewportH = 0.0
+        this.wheelScrollSpeed = 40.0
+        this.style = style
+    }
+
+    public static func styled(styleName: String): TableView {
+        TableView(TableViewStyle.fromTheme())
     }
 
     public func addColumn(column: TableColumn): Unit {
@@ -147,12 +263,23 @@ public class TableView <: Widget {
         total
     }
 
+    private func getHeaderBgColor(): Color { if (style.isThemeBased) { Theme.colors().tableHeaderBg } else { style.headerBgColor } }
+    private func getHeaderTextColor(): Color { if (style.isThemeBased) { Theme.colors().tableHeaderText } else { style.headerTextColor } }
+    private func getSortArrowColor(): Color { if (style.isThemeBased) { Theme.colors().accent } else { style.sortArrowColor } }
+    private func getGridLineColor(): Color { if (style.isThemeBased) { Theme.colors().tableGridLine } else { style.gridLineColor } }
+    private func getSelectedBgColor(): Color { if (style.isThemeBased) { Theme.colors().tableSelectedBg } else { style.selectedBgColor } }
+    private func getRowEvenColor(): Color { if (style.isThemeBased) { Theme.colors().tableRowEven } else { style.rowEvenColor } }
+    private func getRowOddColor(): Color { if (style.isThemeBased) { Theme.colors().tableRowOdd } else { style.rowOddColor } }
+    private func getCellTextColor(): Color { if (style.isThemeBased) { Theme.colors().textPrimary } else { style.cellTextColor } }
+    private func getScrollbarTrackColor(): Color { if (style.isThemeBased) { Theme.colors().scrollbarTrack } else { style.scrollbarTrackColor } }
+    private func getScrollbarThumbColor(): Color { if (style.isThemeBased) { Theme.colors().scrollbarThumb } else { style.scrollbarThumbColor } }
+    private func getScrollbarThumbHoverColor(): Color { if (style.isThemeBased) { Theme.colors().scrollbarThumbHover } else { style.scrollbarThumbHoverColor } }
+
     public func paint(canvas: Canvas, initialWidth: Float32, initialHeight: Float32, currentWidth: Float32, currentHeight: Float32): Unit {
         let frameX = match (layoutFrame) { case Some(f) => f.x; case None => Float32(0.0) }
         let frameY = match (layoutFrame) { case Some(f) => f.y; case None => Float32(0.0) }
         viewportW = match (layoutFrame) { case Some(f) => f.width; case None => Float32(currentWidth) }
         viewportH = match (layoutFrame) { case Some(f) => f.height; case None => Float32(currentHeight) }
-        let c = Theme.colors()
         let totalColW = getTotalColWidth()
         let contentH = Float32(dataRows.size) * rowHeight
         let vpW = viewportW
@@ -177,15 +304,15 @@ public class TableView <: Widget {
             let colRight = colX + col.width
 
             if (colRight > frameX && colX < frameX + vpW2) {
-                canvas.fillRoundedRect(colX, frameY, col.width, headerHeight, 0.0, c.tableHeaderBg)
-                canvas.drawTextAligned(colX + 4.0, frameY + 2.0, col.width - 8.0, headerHeight - 4.0, col.title, "Microsoft YaHei", 13.0, col.alignment, c.tableHeaderText)
+                canvas.fillRoundedRect(colX, frameY, col.width, headerHeight, 0.0, getHeaderBgColor())
+                canvas.drawTextAligned(colX + 4.0, frameY + 2.0, col.width - 8.0, headerHeight - 4.0, col.title, "Microsoft YaHei", 13.0, col.alignment, getHeaderTextColor())
 
                 if (sortColumn == colIdx) {
                     let arrow = if (sortAscending) { " ^" } else { " v" }
-                    canvas.drawText(colX + 4.0, frameY + 4.0, arrow, "Microsoft YaHei", 10.0, c.accent)
+                    canvas.drawText(colX + 4.0, frameY + 4.0, arrow, "Microsoft YaHei", 10.0, getSortArrowColor())
                 }
 
-                canvas.drawLine(colRight - 1.0, frameY + 4.0, colRight - 1.0, frameY + headerHeight - 4.0, 1.0, c.tableGridLine)
+                canvas.drawLine(colRight - 1.0, frameY + 4.0, colRight - 1.0, frameY + headerHeight - 4.0, 1.0, getGridLineColor())
             }
             colX = colRight
         }
@@ -203,11 +330,11 @@ public class TableView <: Widget {
             let y = rowAreaY + Float32(ri) * rowHeight - scrollY
 
             if (Int32(ri) == selectedRow) {
-                canvas.fillRoundedRect(frameX, y, vpW2, rowHeight, 0.0, c.tableSelectedBg)
+                canvas.fillRoundedRect(frameX, y, vpW2, rowHeight, 0.0, getSelectedBgColor())
             } else if (Int32(ri) % 2 == 0) {
-                canvas.fillRoundedRect(frameX, y, vpW2, rowHeight, 0.0, c.tableRowEven)
+                canvas.fillRoundedRect(frameX, y, vpW2, rowHeight, 0.0, getRowEvenColor())
             } else {
-                canvas.fillRoundedRect(frameX, y, vpW2, rowHeight, 0.0, c.tableRowOdd)
+                canvas.fillRoundedRect(frameX, y, vpW2, rowHeight, 0.0, getRowOddColor())
             }
 
             var cellX: Float32 = frameX - scrollX
@@ -216,8 +343,8 @@ public class TableView <: Widget {
                 let cellRight = cellX + col.width
                 if (cellRight > frameX && cellX < frameX + vpW2) {
                     let cellText = if (Int64(ci) < row.size) { row[Int64(ci)] } else { "" }
-                    canvas.drawTextAligned(cellX + 4.0, y + 2.0, col.width - 8.0, rowHeight - 4.0, cellText, "Microsoft YaHei", 13.0, col.alignment, c.textPrimary)
-                    canvas.drawLine(cellRight - 1.0, y, cellRight - 1.0, y + rowHeight, 1.0, c.tableGridLine)
+                    canvas.drawTextAligned(cellX + 4.0, y + 2.0, col.width - 8.0, rowHeight - 4.0, cellText, "Microsoft YaHei", 13.0, col.alignment, getCellTextColor())
+                    canvas.drawLine(cellRight - 1.0, y, cellRight - 1.0, y + rowHeight, 1.0, getGridLineColor())
                 }
                 cellX = cellRight
             }
@@ -229,7 +356,6 @@ public class TableView <: Widget {
     }
 
     private func paintScrollbars(canvas: Canvas, frameX: Float32, frameY: Float32, vpW: Float32, vpH: Float32): Unit {
-        let c = Theme.colors()
         let alpha = UInt8(barOpacity * 255.0)
         if (alpha == 0) { return }
 
@@ -241,12 +367,15 @@ public class TableView <: Widget {
             let thumbTravel = barH - thumbH - 4.0
             let thumbY = frameY + headerHeight + 2.0 + (scrollY / maxScrollY) * thumbTravel
 
+            let trackC = getScrollbarTrackColor()
             canvas.fillRoundedRect(barX + 2.0, frameY + headerHeight, barThickness - 4.0, barH, 4.0,
-                Color.rgba(c.scrollbarTrack.r, c.scrollbarTrack.g, c.scrollbarTrack.b, alpha))
+                Color.rgba(trackC.r, trackC.g, trackC.b, alpha))
             let thumbColor = if (draggingBarY || hoveredBarY) {
-                Color.rgba(c.scrollbarThumbHover.r, c.scrollbarThumbHover.g, c.scrollbarThumbHover.b, alpha)
+                let hoverC = getScrollbarThumbHoverColor()
+                Color.rgba(hoverC.r, hoverC.g, hoverC.b, alpha)
             } else {
-                Color.rgba(c.scrollbarThumb.r, c.scrollbarThumb.g, c.scrollbarThumb.b, alpha)
+                let thumbC = getScrollbarThumbColor()
+                Color.rgba(thumbC.r, thumbC.g, thumbC.b, alpha)
             }
             canvas.fillRoundedRect(barX + 2.0, thumbY, barThickness - 4.0, thumbH, 4.0, thumbColor)
         }
@@ -259,12 +388,15 @@ public class TableView <: Widget {
             let thumbTravel = barW - thumbW - 4.0
             let thumbX = frameX + 2.0 + (scrollX / maxScrollX) * thumbTravel
 
+            let trackC = getScrollbarTrackColor()
             canvas.fillRoundedRect(frameX, barY + 2.0, barW, barThickness - 4.0, 4.0,
-                Color.rgba(c.scrollbarTrack.r, c.scrollbarTrack.g, c.scrollbarTrack.b, alpha))
+                Color.rgba(trackC.r, trackC.g, trackC.b, alpha))
             let thumbColor = if (draggingBarX || hoveredBarX) {
-                Color.rgba(c.scrollbarThumbHover.r, c.scrollbarThumbHover.g, c.scrollbarThumbHover.b, alpha)
+                let hoverC = getScrollbarThumbHoverColor()
+                Color.rgba(hoverC.r, hoverC.g, hoverC.b, alpha)
             } else {
-                Color.rgba(c.scrollbarThumb.r, c.scrollbarThumb.g, c.scrollbarThumb.b, alpha)
+                let thumbC = getScrollbarThumbColor()
+                Color.rgba(thumbC.r, thumbC.g, thumbC.b, alpha)
             }
             canvas.fillRoundedRect(thumbX, barY + 2.0, thumbW, barThickness - 4.0, 4.0, thumbColor)
         }

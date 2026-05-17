@@ -1,33 +1,83 @@
 package cjform
 
+public struct GroupBoxStyle {
+    public let borderColor: Color
+    public let titleColor: Color
+    public let titleHeight: Float32
+    public let borderWidth: Float32
+    public let fontFamily: String
+    public let fontSize: Float32
+    public let isThemeBased: Bool
+
+    public init() {
+        this.borderColor = Color.WHITE; this.titleColor = Color.WHITE
+        this.titleHeight = 22.0; this.borderWidth = 1.0
+        this.fontFamily = "Microsoft YaHei"; this.fontSize = 13.0
+        this.isThemeBased = false
+    }
+
+    public init(borderColor: Color, titleColor: Color, titleHeight: Float32,
+        borderWidth: Float32, fontFamily: String, fontSize: Float32) {
+        this.borderColor = borderColor; this.titleColor = titleColor
+        this.titleHeight = titleHeight; this.borderWidth = borderWidth
+        this.fontFamily = fontFamily; this.fontSize = fontSize
+        this.isThemeBased = false
+    }
+
+    public init(isThemeBased: Bool) {
+        this.borderColor = Color.WHITE; this.titleColor = Color.WHITE
+        this.titleHeight = 22.0; this.borderWidth = 1.0
+        this.fontFamily = "Microsoft YaHei"; this.fontSize = 13.0
+        this.isThemeBased = isThemeBased
+    }
+
+    public static func fromTheme(): GroupBoxStyle { GroupBoxStyle(true) }
+}
+
 public class GroupBox <: Widget {
+    private var style: GroupBoxStyle
     private var title: String
     private var content: Option<Widget>
     private var layoutFrame: Option<LayoutFrame>
 
     public init(title: String) {
+        this.style = GroupBoxStyle.fromTheme()
         this.title = title
         this.content = None<Widget>
         this.layoutFrame = None
     }
 
+    public init(title: String, style: GroupBoxStyle) {
+        this.style = style
+        this.title = title
+        this.content = None<Widget>
+        this.layoutFrame = None
+    }
+
+    public static func styled(styleName: String, title: String): GroupBox {
+        GroupBox(title, GroupBoxStyle.fromTheme())
+    }
+
     public func setContent(widget: Widget): Unit { this.content = Some(widget) }
     public func getContent(): Option<Widget> { content }
 
+    private func getBorderColor(): Color { if (style.isThemeBased) { Theme.colors().border } else { style.borderColor } }
+    private func getTitleColor(): Color { if (style.isThemeBased) { Theme.colors().textPrimary } else { style.titleColor } }
+
     public func paint(canvas: Canvas, initialWidth: Float32, initialHeight: Float32, currentWidth: Float32, currentHeight: Float32): Unit {
         let (x, y, w, h) = getFrame()
-        let c = Theme.colors()
-        let titleH: Float32 = 22.0
+        let titleH = style.titleHeight
+        let borderC = getBorderColor()
         let halfTitle: Float32 = titleH / Float32(2.0)
-        let titleW = canvas.measureTextWidth(title, "Microsoft YaHei", Float32(13.0))
+        let titleW = canvas.measureTextWidth(title, style.fontFamily, style.fontSize)
         let lineY = y + halfTitle
-        canvas.drawLine(x + Float32(8.0), lineY, x + Float32(12.0), lineY, Float32(1.0), c.border)
+        canvas.drawLine(x + Float32(8.0), lineY, x + Float32(12.0), lineY, style.borderWidth, borderC)
         let gapEnd = x + Float32(16.0) + titleW
-        canvas.drawLine(gapEnd, lineY, x + w - Float32(8.0), lineY, Float32(1.0), c.border)
-        canvas.drawText(x + Float32(14.0), y, title, "Microsoft YaHei", Float32(13.0), c.textPrimary)
-        canvas.drawLine(x + Float32(8.0), lineY, x + Float32(8.0), y + h - Float32(8.0), Float32(1.0), c.border)
-        canvas.drawLine(x + w - Float32(8.0), lineY, x + w - Float32(8.0), y + h - Float32(8.0), Float32(1.0), c.border)
-        canvas.drawLine(x + Float32(8.0), y + h - Float32(8.0), x + w - Float32(8.0), y + h - Float32(8.0), Float32(1.0), c.border)
+        canvas.drawLine(gapEnd, lineY, x + w - Float32(8.0), lineY, style.borderWidth, borderC)
+        canvas.drawText(x + Float32(14.0), y, title, style.fontFamily, style.fontSize, getTitleColor())
+        canvas.drawLine(x + Float32(8.0), lineY, x + Float32(8.0), y + h - Float32(8.0), style.borderWidth, borderC)
+        canvas.drawLine(x + w - Float32(8.0), lineY, x + w - Float32(8.0), y + h - Float32(8.0), style.borderWidth, borderC)
+        canvas.drawLine(x + Float32(8.0), y + h - Float32(8.0), x + w - Float32(8.0), y + h - Float32(8.0), style.borderWidth, borderC)
         let contentX = x + Float32(12.0)
         let contentY = y + titleH + Float32(4.0)
         let contentW = w - Float32(24.0)

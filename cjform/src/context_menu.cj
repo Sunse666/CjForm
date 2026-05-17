@@ -2,10 +2,69 @@ package cjform
 
 import std.collection.*
 
+public struct ContextMenuStyle {
+    public let backgroundColor: Color
+    public let borderColor: Color
+    public let shadowColor: Color
+    public let itemHoverColor: Color
+    public let itemTextColor: Color
+    public let itemTextSecondaryColor: Color
+    public let cornerRadius: Float32
+    public let borderWidth: Float32
+    public let itemHeight: Float32
+    public let minWidth: Float32
+    public let isThemeBased: Bool
+
+    public init() {
+        this.backgroundColor = Color.WHITE
+        this.borderColor = Color.WHITE
+        this.shadowColor = Color.WHITE
+        this.itemHoverColor = Color.WHITE
+        this.itemTextColor = Color.WHITE
+        this.itemTextSecondaryColor = Color.WHITE
+        this.cornerRadius = 6.0
+        this.borderWidth = 1.0
+        this.itemHeight = 28.0
+        this.minWidth = 150.0
+        this.isThemeBased = false
+    }
+
+    public init(backgroundColor: Color, borderColor: Color, shadowColor: Color,
+        itemHoverColor: Color, itemTextColor: Color, itemTextSecondaryColor: Color,
+        cornerRadius: Float32, borderWidth: Float32, itemHeight: Float32, minWidth: Float32) {
+        this.backgroundColor = backgroundColor
+        this.borderColor = borderColor
+        this.shadowColor = shadowColor
+        this.itemHoverColor = itemHoverColor
+        this.itemTextColor = itemTextColor
+        this.itemTextSecondaryColor = itemTextSecondaryColor
+        this.cornerRadius = cornerRadius
+        this.borderWidth = borderWidth
+        this.itemHeight = itemHeight
+        this.minWidth = minWidth
+        this.isThemeBased = false
+    }
+
+    public init(isThemeBased: Bool) {
+        this.backgroundColor = Color.WHITE
+        this.borderColor = Color.WHITE
+        this.shadowColor = Color.WHITE
+        this.itemHoverColor = Color.WHITE
+        this.itemTextColor = Color.WHITE
+        this.itemTextSecondaryColor = Color.WHITE
+        this.cornerRadius = 6.0
+        this.borderWidth = 1.0
+        this.itemHeight = 28.0
+        this.minWidth = 150.0
+        this.isThemeBased = isThemeBased
+    }
+
+    public static func fromTheme(): ContextMenuStyle { ContextMenuStyle(true) }
+}
+
 public class ContextMenu <: Widget {
     private var items: ArrayList<MenuItem>
-    private var itemHeight: Float32
-    private var minWidth: Float32
+    private var style: ContextMenuStyle
     private var posX: Float32
     private var posY: Float32
     private var hoveredItem: Int32
@@ -17,8 +76,7 @@ public class ContextMenu <: Widget {
 
     public init() {
         this.items = ArrayList<MenuItem>()
-        this.itemHeight = 28.0
-        this.minWidth = 150.0
+        this.style = ContextMenuStyle.fromTheme()
         this.posX = 0.0
         this.posY = 0.0
         this.hoveredItem = -1
@@ -27,6 +85,23 @@ public class ContextMenu <: Widget {
         this.computedHeight = 0.0
         this.adjustedX = 0.0
         this.adjustedY = 0.0
+    }
+
+    public init(style: ContextMenuStyle) {
+        this.items = ArrayList<MenuItem>()
+        this.style = style
+        this.posX = 0.0
+        this.posY = 0.0
+        this.hoveredItem = -1
+        this.layoutFrame = None
+        this.computedWidth = 0.0
+        this.computedHeight = 0.0
+        this.adjustedX = 0.0
+        this.adjustedY = 0.0
+    }
+
+    public static func styled(styleName: String): ContextMenu {
+        ContextMenu(ContextMenuStyle.fromTheme())
     }
 
     public func addItem(item: MenuItem): Unit {
@@ -44,9 +119,19 @@ public class ContextMenu <: Widget {
         item.text.size == 0 && item.shortcut.size == 0 && !item.isEnabled
     }
 
+    private func getBgColor(): Color { if (style.isThemeBased) { Theme.colors().popupBg } else { style.backgroundColor } }
+    private func getBorderColor(): Color { if (style.isThemeBased) { Theme.colors().popupBorder } else { style.borderColor } }
+    private func getShadowColor(): Color { if (style.isThemeBased) { Theme.colors().shadow } else { style.shadowColor } }
+    private func getItemHoverColor(): Color { if (style.isThemeBased) { Theme.colors().popupItemHover } else { style.itemHoverColor } }
+    private func getItemTextColor(): Color { if (style.isThemeBased) { Theme.colors().popupItemText } else { style.itemTextColor } }
+    private func getItemTextSecondaryColor(): Color { if (style.isThemeBased) { Theme.colors().popupItemTextSecondary } else { style.itemTextSecondaryColor } }
+    private func getCornerRadius(): Float32 { if (style.isThemeBased) { 6.0 } else { style.cornerRadius } }
+    private func getBorderWidth(): Float32 { if (style.isThemeBased) { 1.0 } else { style.borderWidth } }
+    private func getItemHeight(): Float32 { if (style.isThemeBased) { 28.0 } else { style.itemHeight } }
+    private func getMinWidth(): Float32 { if (style.isThemeBased) { 150.0 } else { style.minWidth } }
+
     public func paint(canvas: Canvas, initialWidth: Float32, initialHeight: Float32, currentWidth: Float32, currentHeight: Float32): Unit {
-        let c = Theme.colors()
-        computedWidth = minWidth
+        computedWidth = getMinWidth()
         for (item in items) {
             if (item.text.size == 0 && item.shortcut.size == 0 && !item.isEnabled) { continue }
             let textW = canvas.measureTextWidth(item.text, "Microsoft YaHei", 13.0) + 40.0
@@ -59,7 +144,7 @@ public class ContextMenu <: Widget {
         var totalH: Float32 = 0.0
         for (item in items) {
             let isItemSep = item.text.size == 0 && item.shortcut.size == 0 && !item.isEnabled
-            totalH = totalH + if (isItemSep) { 8.0 } else { itemHeight }
+            totalH = totalH + if (isItemSep) { 8.0 } else { getItemHeight() }
         }
         computedHeight = totalH + 8.0
         var px = posX
@@ -70,9 +155,9 @@ public class ContextMenu <: Widget {
         if (py < 0.0) { py = Float32(4.0) }
         adjustedX = px
         adjustedY = py
-        canvas.drawShadow(px, py, computedWidth, computedHeight, 6.0, 8.0, 0.0, 4.0, c.shadow)
-        canvas.fillRoundedRect(px, py, computedWidth, computedHeight, 6.0, c.popupBg)
-        canvas.drawRoundedRect(px, py, computedWidth, computedHeight, 6.0, 1.0, c.popupBorder)
+        canvas.drawShadow(px, py, computedWidth, computedHeight, getCornerRadius(), 8.0, 0.0, 4.0, getShadowColor())
+        canvas.fillRoundedRect(px, py, computedWidth, computedHeight, getCornerRadius(), getBgColor())
+        canvas.drawRoundedRect(px, py, computedWidth, computedHeight, getCornerRadius(), getBorderWidth(), getBorderColor())
         var itemY: Float32 = py + 4.0
         for (i in 0..items.size) {
             let item = items[i]
@@ -80,18 +165,18 @@ public class ContextMenu <: Widget {
             let isItemSep = item.text.size == 0 && item.shortcut.size == 0 && !item.isEnabled
 
             if (isItemSep) {
-                canvas.drawLine(px + 12.0, itemY + 3.0, px + computedWidth - 12.0, itemY + 3.0, 1.0, c.popupBorder)
+                canvas.drawLine(px + 12.0, itemY + 3.0, px + computedWidth - 12.0, itemY + 3.0, 1.0, getBorderColor())
                 itemY = itemY + 8.0
             } else {
                 if (itemIdx == hoveredItem && item.isEnabled) {
-                    canvas.fillRoundedRect(px + 4.0, itemY, computedWidth - 8.0, itemHeight, 4.0, c.popupItemHover)
+                    canvas.fillRoundedRect(px + 4.0, itemY, computedWidth - 8.0, getItemHeight(), 4.0, getItemHoverColor())
                 }
-                let textColor = if (item.isEnabled) { c.popupItemText } else { c.popupItemTextSecondary }
-                canvas.drawTextAligned(px + 12.0, itemY, computedWidth - 100.0, itemHeight, item.text, "Microsoft YaHei", 13.0, 0, textColor)
+                let textColor = if (item.isEnabled) { getItemTextColor() } else { getItemTextSecondaryColor() }
+                canvas.drawTextAligned(px + 12.0, itemY, computedWidth - 100.0, getItemHeight(), item.text, "Microsoft YaHei", 13.0, 0, textColor)
                 if (item.shortcut.size > 0) {
-                    canvas.drawTextAligned(px + computedWidth - 90.0, itemY, 78.0, itemHeight, item.shortcut, "Microsoft YaHei", 11.0, 2, c.popupItemTextSecondary)
+                    canvas.drawTextAligned(px + computedWidth - 90.0, itemY, 78.0, getItemHeight(), item.shortcut, "Microsoft YaHei", 11.0, 2, getItemTextSecondaryColor())
                 }
-                itemY = itemY + itemHeight
+                itemY = itemY + getItemHeight()
             }
         }
     }
@@ -110,7 +195,7 @@ public class ContextMenu <: Widget {
         for (i in 0..items.size) {
             let item = items[i]
             let isItemSep = item.text.size == 0 && item.shortcut.size == 0 && !item.isEnabled
-            let h = if (isItemSep) { Float32(8.0) } else { itemHeight }
+            let h = if (isItemSep) { Float32(8.0) } else { getItemHeight() }
             if (y >= itemY && y <= itemY + h) {
                 return if (isItemSep) { Int32(-1) } else { Int32(i) }
             }
@@ -148,7 +233,7 @@ public class ContextMenu <: Widget {
     public func contains(x: Float32, y: Float32): Bool { true }
     public func updateAnimation(tickCount: Int64): Bool { false }
     public func findLeafAt(x: Float32, y: Float32): Widget { this }
-    public func getLayoutMinWidth(): Float32 { minWidth }
+    public func getLayoutMinWidth(): Float32 { getMinWidth() }
     public func getLayoutMinHeight(): Float32 { 100.0 }
     public func setLayoutFrame(frame: LayoutFrame): Unit { this.layoutFrame = Some(frame) }
     public func clearLayoutFrame(): Unit { this.layoutFrame = None }

@@ -2,6 +2,79 @@ package cjform
 
 import std.collection.*
 
+public struct ComboBoxStyle {
+    public let backgroundColor: Color
+    public let hoverBackgroundColor: Color
+    public let borderColor: Color
+    public let textColor: Color
+    public let arrowColor: Color
+    public let shadowColor: Color
+    public let popupBgColor: Color
+    public let popupBorderColor: Color
+    public let popupItemHoverColor: Color
+    public let popupSelectedTextColor: Color
+    public let popupItemTextColor: Color
+    public let cornerRadius: Float32
+    public let borderWidth: Float32
+    public let isThemeBased: Bool
+
+    public init() {
+        this.backgroundColor = Color.WHITE
+        this.hoverBackgroundColor = Color.WHITE
+        this.borderColor = Color.WHITE
+        this.textColor = Color.WHITE
+        this.arrowColor = Color.WHITE
+        this.shadowColor = Color.WHITE
+        this.popupBgColor = Color.WHITE
+        this.popupBorderColor = Color.WHITE
+        this.popupItemHoverColor = Color.WHITE
+        this.popupSelectedTextColor = Color.WHITE
+        this.popupItemTextColor = Color.WHITE
+        this.cornerRadius = 4.0
+        this.borderWidth = 1.0
+        this.isThemeBased = false
+    }
+
+    public init(backgroundColor: Color, hoverBackgroundColor: Color, borderColor: Color,
+        textColor: Color, arrowColor: Color, shadowColor: Color, popupBgColor: Color,
+        popupBorderColor: Color, popupItemHoverColor: Color, popupSelectedTextColor: Color,
+        popupItemTextColor: Color, cornerRadius: Float32, borderWidth: Float32) {
+        this.backgroundColor = backgroundColor
+        this.hoverBackgroundColor = hoverBackgroundColor
+        this.borderColor = borderColor
+        this.textColor = textColor
+        this.arrowColor = arrowColor
+        this.shadowColor = shadowColor
+        this.popupBgColor = popupBgColor
+        this.popupBorderColor = popupBorderColor
+        this.popupItemHoverColor = popupItemHoverColor
+        this.popupSelectedTextColor = popupSelectedTextColor
+        this.popupItemTextColor = popupItemTextColor
+        this.cornerRadius = cornerRadius
+        this.borderWidth = borderWidth
+        this.isThemeBased = false
+    }
+
+    public init(isThemeBased: Bool) {
+        this.backgroundColor = Color.WHITE
+        this.hoverBackgroundColor = Color.WHITE
+        this.borderColor = Color.WHITE
+        this.textColor = Color.WHITE
+        this.arrowColor = Color.WHITE
+        this.shadowColor = Color.WHITE
+        this.popupBgColor = Color.WHITE
+        this.popupBorderColor = Color.WHITE
+        this.popupItemHoverColor = Color.WHITE
+        this.popupSelectedTextColor = Color.WHITE
+        this.popupItemTextColor = Color.WHITE
+        this.cornerRadius = 4.0
+        this.borderWidth = 1.0
+        this.isThemeBased = isThemeBased
+    }
+
+    public static func fromTheme(): ComboBoxStyle { ComboBoxStyle(true) }
+}
+
 public class ComboBox <: Widget {
     private var items: ArrayList<String>
     private var selectedIndex: Int32
@@ -14,6 +87,7 @@ public class ComboBox <: Widget {
     private var onSelectionChanged: Option<(Int32, String) -> Unit>
     private var layoutFrame: Option<LayoutFrame>
     private var parentWindow: Option<Window>
+    private var style: ComboBoxStyle
 
     public init() {
         this.items = ArrayList<String>()
@@ -27,6 +101,26 @@ public class ComboBox <: Widget {
         this.onSelectionChanged = None<(Int32, String) -> Unit>
         this.layoutFrame = None
         this.parentWindow = None<Window>
+        this.style = ComboBoxStyle.fromTheme()
+    }
+
+    public init(style: ComboBoxStyle) {
+        this.items = ArrayList<String>()
+        this.selectedIndex = -1
+        this.isOpen = false
+        this.isHovered = false
+        this.hoveredItemIndex = -1
+        this.buttonHeight = 30.0
+        this.dropDownMaxHeight = 200.0
+        this.itemHeight = 26.0
+        this.onSelectionChanged = None<(Int32, String) -> Unit>
+        this.layoutFrame = None
+        this.parentWindow = None<Window>
+        this.style = style
+    }
+
+    public static func styled(styleName: String): ComboBox {
+        ComboBox(ComboBoxStyle.fromTheme())
     }
 
     public func setItems(items: ArrayList<String>): Unit {
@@ -50,6 +144,20 @@ public class ComboBox <: Widget {
         }
     }
 
+    private func getBackgroundColor(): Color { if (style.isThemeBased) { Theme.colors().inputBg } else { style.backgroundColor } }
+    private func getHoverBackgroundColor(): Color { if (style.isThemeBased) { Theme.colors().buttonHover } else { style.hoverBackgroundColor } }
+    private func getBorderColor(): Color { if (style.isThemeBased) { Theme.colors().inputBorder } else { style.borderColor } }
+    private func getTextColor(): Color { if (style.isThemeBased) { Theme.colors().textPrimary } else { style.textColor } }
+    private func getArrowColor(): Color { if (style.isThemeBased) { Theme.colors().textSecondary } else { style.arrowColor } }
+    private func getShadowColor(): Color { if (style.isThemeBased) { Theme.colors().shadow } else { style.shadowColor } }
+    private func getPopupBgColor(): Color { if (style.isThemeBased) { Theme.colors().popupBg } else { style.popupBgColor } }
+    private func getPopupBorderColor(): Color { if (style.isThemeBased) { Theme.colors().popupBorder } else { style.popupBorderColor } }
+    private func getPopupItemHoverColor(): Color { if (style.isThemeBased) { Theme.colors().popupItemHover } else { style.popupItemHoverColor } }
+    private func getPopupSelectedTextColor(): Color { if (style.isThemeBased) { Theme.colors().accent } else { style.popupSelectedTextColor } }
+    private func getPopupItemTextColor(): Color { if (style.isThemeBased) { Theme.colors().popupItemText } else { style.popupItemTextColor } }
+    private func getCornerRadius(): Float32 { if (style.isThemeBased) { 4.0 } else { style.cornerRadius } }
+    private func getBorderWidth(): Float32 { if (style.isThemeBased) { 1.0 } else { style.borderWidth } }
+
     public func paint(canvas: Canvas, initialWidth: Float32, initialHeight: Float32, currentWidth: Float32, currentHeight: Float32): Unit {
         if (isOpen) {
             match (parentWindow) {
@@ -62,19 +170,18 @@ public class ComboBox <: Widget {
         let frameX = match (layoutFrame) { case Some(f) => f.x; case None => Float32(0.0) }
         let frameY = match (layoutFrame) { case Some(f) => f.y; case None => Float32(0.0) }
         let frameW = match (layoutFrame) { case Some(f) => f.width; case None => Float32(200.0) }
-        let c = Theme.colors()
-        let bgColor = if (isHovered) { c.buttonHover } else { c.inputBg }
-        canvas.fillRoundedRect(frameX, frameY, frameW, buttonHeight, 4.0, bgColor)
-        canvas.drawRoundedRect(frameX, frameY, frameW, buttonHeight, 4.0, 1.0, c.inputBorder)
+        let bgColor = if (isHovered) { getHoverBackgroundColor() } else { getBackgroundColor() }
+        canvas.fillRoundedRect(frameX, frameY, frameW, buttonHeight, getCornerRadius(), bgColor)
+        canvas.drawRoundedRect(frameX, frameY, frameW, buttonHeight, getCornerRadius(), getBorderWidth(), getBorderColor())
         let label = getSelectedLabel()
         if (label.size > 0) {
-            canvas.drawTextAligned(frameX + 8.0, frameY, frameW - 28.0, buttonHeight, label, "Microsoft YaHei", 13.0, 0, c.textPrimary)
+            canvas.drawTextAligned(frameX + 8.0, frameY, frameW - 28.0, buttonHeight, label, "Microsoft YaHei", 13.0, 0, getTextColor())
         }
         let arrowX = frameX + frameW - 18.0
         let arrowY = frameY + buttonHeight / 2.0 - 3.0
-        canvas.drawLine(arrowX, arrowY, arrowX + 8.0, arrowY, 1.5, c.textSecondary)
-        canvas.drawLine(arrowX + 2.0, arrowY + 3.0, arrowX + 6.0, arrowY + 3.0, 1.5, c.textSecondary)
-        canvas.drawLine(arrowX + 4.0, arrowY + 6.0, arrowX + 4.0, arrowY + 6.0, 1.5, c.textSecondary)
+        canvas.drawLine(arrowX, arrowY, arrowX + 8.0, arrowY, 1.5, getArrowColor())
+        canvas.drawLine(arrowX + 2.0, arrowY + 3.0, arrowX + 6.0, arrowY + 3.0, 1.5, getArrowColor())
+        canvas.drawLine(arrowX + 4.0, arrowY + 6.0, arrowX + 4.0, arrowY + 6.0, 1.5, getArrowColor())
         if (isOpen) {
             let (dropX, dropY) = getDropDownPosition(frameY)
             paintDropdown(canvas, initialWidth, initialHeight, currentWidth, currentHeight, dropX, dropY)
@@ -82,21 +189,20 @@ public class ComboBox <: Widget {
     }
 
     public func paintDropdown(canvas: Canvas, initialWidth: Float32, initialHeight: Float32, currentWidth: Float32, currentHeight: Float32, dropX: Float32, dropY: Float32): Unit {
-        let c = Theme.colors()
         let count = items.size
         let dropH = if (Float32(count) * itemHeight > dropDownMaxHeight) { dropDownMaxHeight } else { Float32(count) * itemHeight }
 
-        canvas.drawShadow(dropX, dropY, Float32(200.0), dropH, 4.0, 6.0, 0.0, 4.0, c.shadow)
-        canvas.fillRoundedRect(dropX, dropY, Float32(200.0), dropH, 4.0, c.popupBg)
-        canvas.drawRoundedRect(dropX, dropY, Float32(200.0), dropH, 4.0, 1.0, c.popupBorder)
+        canvas.drawShadow(dropX, dropY, Float32(200.0), dropH, 4.0, 6.0, 0.0, 4.0, getShadowColor())
+        canvas.fillRoundedRect(dropX, dropY, Float32(200.0), dropH, 4.0, getPopupBgColor())
+        canvas.drawRoundedRect(dropX, dropY, Float32(200.0), dropH, 4.0, 1.0, getPopupBorderColor())
 
         for (i in 0..count) {
             let itemY = dropY + Float32(i) * itemHeight
             let itemIdx = Int32(i)
             if (itemIdx == hoveredItemIndex || itemIdx == selectedIndex) {
-                canvas.fillRoundedRect(dropX + 2.0, itemY + 1.0, Float32(196.0), itemHeight - 2.0, 3.0, c.popupItemHover)
+                canvas.fillRoundedRect(dropX + 2.0, itemY + 1.0, Float32(196.0), itemHeight - 2.0, 3.0, getPopupItemHoverColor())
             }
-            let textColor = if (itemIdx == selectedIndex) { c.accent } else { c.popupItemText }
+            let textColor = if (itemIdx == selectedIndex) { getPopupSelectedTextColor() } else { getPopupItemTextColor() }
             canvas.drawTextAligned(dropX + 8.0, itemY, Float32(184.0), itemHeight, items[i], "Microsoft YaHei", 13.0, 0, textColor)
         }
     }

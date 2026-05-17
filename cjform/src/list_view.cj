@@ -14,6 +14,40 @@ class ListItemEntry {
     }
 }
 
+public struct ListViewStyle {
+    public let selectionColor: Color
+    public let scrollbarTrackColor: Color
+    public let scrollbarThumbColor: Color
+    public let scrollbarThumbHoverColor: Color
+    public let isThemeBased: Bool
+
+    public init() {
+        this.selectionColor = Color.WHITE
+        this.scrollbarTrackColor = Color.WHITE
+        this.scrollbarThumbColor = Color.WHITE
+        this.scrollbarThumbHoverColor = Color.WHITE
+        this.isThemeBased = false
+    }
+
+    public init(selectionColor: Color, scrollbarTrackColor: Color, scrollbarThumbColor: Color, scrollbarThumbHoverColor: Color) {
+        this.selectionColor = selectionColor
+        this.scrollbarTrackColor = scrollbarTrackColor
+        this.scrollbarThumbColor = scrollbarThumbColor
+        this.scrollbarThumbHoverColor = scrollbarThumbHoverColor
+        this.isThemeBased = false
+    }
+
+    public init(isThemeBased: Bool) {
+        this.selectionColor = Color.WHITE
+        this.scrollbarTrackColor = Color.WHITE
+        this.scrollbarThumbColor = Color.WHITE
+        this.scrollbarThumbHoverColor = Color.WHITE
+        this.isThemeBased = isThemeBased
+    }
+
+    public static func fromTheme(): ListViewStyle { ListViewStyle(true) }
+}
+
 public class ListView <: Widget {
     private var items: ArrayList<String>
     private var itemCount: Int32
@@ -43,6 +77,7 @@ public class ListView <: Widget {
     private var contentX: Float32
     private var contentY: Float32
     private var wheelScrollSpeed: Float32
+    private var style: ListViewStyle
 
     public init(itemHeight: Float32) {
         this.items = ArrayList<String>()
@@ -73,6 +108,43 @@ public class ListView <: Widget {
         this.contentX = 0.0
         this.contentY = 0.0
         this.wheelScrollSpeed = 40.0
+        this.style = ListViewStyle.fromTheme()
+    }
+
+    public init(itemHeight: Float32, style: ListViewStyle) {
+        this.items = ArrayList<String>()
+        this.itemCount = 0
+        this.itemHeight = itemHeight
+        this.itemBuilder = { i, s => Label(s, Position.abs(0.0, 0.0), "Microsoft YaHei", 14.0, SizeScale.fixed(), Anchor.CenterLeft, false) }
+        this.activeItems = ArrayList<ListItemEntry>()
+        this.recyclePool = ArrayList<Widget>()
+        this.scrollOffset = 0.0
+        this.targetScrollOffset = 0.0
+        this.maxScrollOffset = 0.0
+        this.scrollAnim = AnimationState()
+        this.barThickness = 10.0
+        this.barMinLength = 20.0
+        this.showBar = false
+        this.barOpacity = 0.3
+        this.barOpacityAnim = AnimationState()
+        this.lastWheelTime = 0
+        this.draggingBar = false
+        this.dragStartScroll = 0.0
+        this.dragStartMouseY = 0.0
+        this.hoveredBar = false
+        this.selectedIndex = -1
+        this.onSelectionChanged = None<(Int32) -> Unit>
+        this.layoutFrame = None
+        this.viewportW = 0.0
+        this.viewportH = 0.0
+        this.contentX = 0.0
+        this.contentY = 0.0
+        this.wheelScrollSpeed = 40.0
+        this.style = style
+    }
+
+    public static func styled(styleName: String, itemHeight: Float32): ListView {
+        ListView(itemHeight, ListViewStyle.fromTheme())
     }
 
     public func setData(items: ArrayList<String>): Unit {
@@ -159,11 +231,11 @@ public class ListView <: Widget {
 
         canvas.pushClip(contentX, contentY, vpW, viewportH)
 
-        let c = Theme.colors()
         for (entry in activeItems) {
             if (entry.index == selectedIndex) {
+                let sel = getSelectionColor()
                 canvas.fillRoundedRect(contentX + 2.0, entry.yOffset, vpW - 4.0, itemHeight, 4.0,
-                    Color.rgba(c.accent.r, c.accent.g, c.accent.b, 40))
+                    Color.rgba(sel.r, sel.g, sel.b, 40))
             }
             entry.widget.paint(canvas, initialWidth, initialHeight, currentWidth, currentHeight)
         }
@@ -198,9 +270,13 @@ public class ListView <: Widget {
         itemBuilder(Int32(index), items[Int64(index)])
     }
 
+    private func getSelectionColor(): Color { if (style.isThemeBased) { Theme.colors().accent } else { style.selectionColor } }
+    private func getScrollbarTrackColor(): Color { if (style.isThemeBased) { Theme.colors().scrollbarTrack } else { style.scrollbarTrackColor } }
+    private func getScrollbarThumbColor(): Color { if (style.isThemeBased) { Theme.colors().scrollbarThumb } else { style.scrollbarThumbColor } }
+    private func getScrollbarThumbHoverColor(): Color { if (style.isThemeBased) { Theme.colors().scrollbarThumbHover } else { style.scrollbarThumbHoverColor } }
+
     private func paintScrollbar(canvas: Canvas, frameX: Float32, frameY: Float32): Unit {
         if (!showBar || maxScrollOffset <= 0.0) { return }
-        let c = Theme.colors()
         let alpha = UInt8(barOpacity * 255.0)
         if (alpha == 0) { return }
 
@@ -210,12 +286,15 @@ public class ListView <: Widget {
         let thumbTravel = barH - thumbH - 4.0
         let thumbY = if (maxScrollOffset > 0.0) { frameY + 2.0 + (scrollOffset / maxScrollOffset) * thumbTravel } else { frameY + 2.0 }
 
+        let trackC = getScrollbarTrackColor()
         canvas.fillRoundedRect(barX + 2.0, frameY, barThickness - 4.0, barH, 4.0,
-            Color.rgba(c.scrollbarTrack.r, c.scrollbarTrack.g, c.scrollbarTrack.b, alpha))
+            Color.rgba(trackC.r, trackC.g, trackC.b, alpha))
         let thumbColor = if (draggingBar || hoveredBar) {
-            Color.rgba(c.scrollbarThumbHover.r, c.scrollbarThumbHover.g, c.scrollbarThumbHover.b, alpha)
+            let hoverC = getScrollbarThumbHoverColor()
+            Color.rgba(hoverC.r, hoverC.g, hoverC.b, alpha)
         } else {
-            Color.rgba(c.scrollbarThumb.r, c.scrollbarThumb.g, c.scrollbarThumb.b, alpha)
+            let thumbC = getScrollbarThumbColor()
+            Color.rgba(thumbC.r, thumbC.g, thumbC.b, alpha)
         }
         canvas.fillRoundedRect(barX + 2.0, thumbY, barThickness - 4.0, thumbH, 4.0, thumbColor)
     }

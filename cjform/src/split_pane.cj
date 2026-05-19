@@ -171,7 +171,7 @@ public class SplitPane <: Widget {
                         } else {
                             hoverDivider = me.y >= sp - halfD && me.y <= sp + halfD && me.x >= x && me.x <= x + w
                         }
-                        routeToChild(event)
+                        routeToChildAt(event, me.x, me.y)
                         true
                     case None => false
                 }
@@ -192,7 +192,7 @@ public class SplitPane <: Widget {
                                 return true
                             }
                         }
-                        routeToChild(event)
+                        routeToChildAt(event, me.x, me.y)
                         true
                     case None => false
                 }
@@ -200,7 +200,26 @@ public class SplitPane <: Widget {
                 isDragging = false
                 routeToChild(event)
                 true
+            case EventType.MouseWheel =>
+                match (event.mouseWheelEvent) {
+                    case Some(we) => routeToChildAt(event, we.x, we.y)
+                    case None => false
+                }
             case _ => routeToChild(event)
+        }
+    }
+
+    private func routeToChildAt(event: Event, mx: Float32, my: Float32): Bool {
+        match (left) {
+            case Some(lw) =>
+                if (lw.hitTest(mx, my, 0.0, 0.0, 0.0, 0.0)) {
+                    return lw.handleEvent(event)
+                }
+            case None => ()
+        }
+        match (right) {
+            case Some(rw) => rw.handleEvent(event)
+            case None => false
         }
     }
 

@@ -98,8 +98,37 @@ public class GroupBox <: Widget {
 
     public func handleEvent(event: Event): Bool {
         match (content) {
-            case Some(child) => child.handleEvent(event)
+            case Some(child) =>
+                match (event.eventType) {
+                    case EventType.MouseMove | EventType.MouseDown | EventType.MouseUp =>
+                        match (event.mouseEvent) {
+                            case Some(me) =>
+                                if (isInContentArea(me.x, me.y)) {
+                                    child.handleEvent(event)
+                                } else { false }
+                            case None => false
+                        }
+                    case EventType.MouseWheel =>
+                        match (event.mouseWheelEvent) {
+                            case Some(we) =>
+                                if (isInContentArea(we.x, we.y)) {
+                                    child.handleEvent(event)
+                                } else { false }
+                            case None => false
+                        }
+                    case _ => child.handleEvent(event)
+                }
             case None => false
+        }
+    }
+
+    private func isInContentArea(x: Float32, y: Float32): Bool {
+        match (layoutFrame) {
+            case Some(f) =>
+                let f4 = Float32(4.0)
+                let headerH = Float32(22.0)
+                x >= f.x + f4 && x <= f.x + f.width - f4 && y >= f.y + headerH && y <= f.y + f.height - f4
+            case None => true
         }
     }
 

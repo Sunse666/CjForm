@@ -30,8 +30,7 @@ public class Window {
     private var overlayWidget: Option<Widget>
     private var mainWidget: Option<Widget>
     private var onFileDrop: Option<(ArrayList<String>) -> Unit>
-    private var dirtyWidgets: ArrayList<Widget>
-    private var fullRender: Bool
+    private var needsRenderFlag: Bool
     private var lastRenderW: Int32
     private var lastRenderH: Int32
 
@@ -62,8 +61,7 @@ public class Window {
         this.contextMenu = None<ContextMenu>
         this.mainWidget = None<Widget>
         this.onFileDrop = None<(ArrayList<String>) -> Unit>
-        this.dirtyWidgets = ArrayList<Widget>()
-        this.fullRender = true
+        this.needsRenderFlag = true
         this.lastRenderW = -1
         this.lastRenderH = -1
 
@@ -297,7 +295,7 @@ public class Window {
             unsafe { bridge_window_clear_key_event(hwnd) }
 
             match (focusedWidget) {
-                case Some(fw) => markDirty(fw)
+                case Some(fw) => requestRender()
                 case None => ()
             }
             processKeyEvent(keyCode, keyEventType, keyChar, ctrlDown, shiftDown, altDown)
@@ -325,7 +323,7 @@ public class Window {
             if (!handled) {
                 for (widget in widgets) {
                     if (widget.hitTest(Float32(wheelX), Float32(wheelY), Float32(width), Float32(height), Float32(curW), Float32(curH))) {
-                        markDirty(widget)
+                        requestRender()
                         if (widget.handleEvent(wheelEvent)) { break }
                     }
                 }
@@ -488,17 +486,17 @@ public class Window {
                 match (hoveredWidget) {
                     case Some(old) =>
                         old.handleEvent(Event.mouseLeave())
-                        markDirty(old)
+                        requestRender()
                         w.handleEvent(Event.mouseEnter())
                         w.handleEvent(Event.mouseMove(x, y))
-                        markDirty(w)
+                        requestRender()
                         hoveredWidget = Some<Widget>(w)
                         hoverStartTime = ffi_getTickCount()
                         tooltipVisible = false
                     case None =>
                         w.handleEvent(Event.mouseEnter())
                         w.handleEvent(Event.mouseMove(x, y))
-                        markDirty(w)
+                        requestRender()
                         hoveredWidget = Some<Widget>(w)
                         hoverStartTime = ffi_getTickCount()
                         tooltipVisible = false
@@ -507,7 +505,7 @@ public class Window {
                 match (hoveredWidget) {
                     case Some(old) =>
                         old.handleEvent(Event.mouseLeave())
-                        markDirty(old)
+                        requestRender()
                         hoveredWidget = None<Widget>
                         tooltipVisible = false
                     case None => ()
@@ -598,7 +596,7 @@ public class Window {
                 }
 
                 leaf.handleEvent(Event.mouseDown(x, y, button))
-                markDirty(leaf)
+                requestRender()
                 pressedWidget = Some<Widget>(leaf)
                 break
             }
@@ -631,7 +629,7 @@ public class Window {
         match (pressedWidget) {
             case Some(w) =>
                 w.handleEvent(Event.mouseUp(x, y, 1))
-                markDirty(w)
+                requestRender()
                 pressedWidget = None<Widget>
                 return
             case None => ()
@@ -641,7 +639,7 @@ public class Window {
             case Some(w) =>
                 let leaf = getLeafWidget(w, x, y)
                 leaf.handleEvent(Event.mouseUp(x, y, 1))
-                markDirty(leaf)
+                requestRender()
                 match (leaf) {
                     case slider: Slider =>
                         slider.handleEvent(Event.mouseUp(x, y, 1))
@@ -652,71 +650,15 @@ public class Window {
                     if (widget.hitTest(x, y, Float32(width), Float32(height), currentWidth, currentHeight)) {
                         let leaf = getLeafWidget(widget, x, y)
                         leaf.handleEvent(Event.mouseUp(x, y, 1))
-                        markDirty(leaf)
+                        requestRender()
                         break
                     }
                 }
         }
     }
 
-    private func markDirty(widget: Widget): Unit {
-        dirtyWidgets.add(widget)
-    }
-
-    private func isContainer(w: Widget): Bool {
-        match (w) {
-            case _: VBox => true
-            case _: HBox => true
-            case _: ScrollArea => true
-            case _: TabView => true
-            case _: GroupBox => true
-            case _: SplitPane => true
-            case _ => false
-        }
-    }
-
-    private func needsPaintPartial(w: Widget): Bool {
-        isContainer(w) || isTopLevelDirty(w)
-    }
-
-    private func isTopLevelDirty(w: Widget): Bool {
-        // check if this top-level widget or any of its descendants was dirtied
-        for (d in dirtyWidgets) {
-            if (widgetContains(w, d)) { return true }
-        }
-        false
-    }
-
-    private func widgetContains(parent: Widget, target: Widget): Bool {
-        // container types repaint their children; check if target is reachable
-        match (parent) {
-            case vbox: VBox =>
-                for (child in vbox.getChildren()) {
-                    if (widgetContains(child, target)) { return true }
-                }
-                false
-            case hbox: HBox =>
-                for (child in hbox.getChildren()) {
-                    if (widgetContains(child, target)) { return true }
-                }
-                false
-            case scroll: ScrollArea =>
-                match (scroll.getContent()) {
-                    case Some(c) => widgetContains(c, target)
-                    case None => false
-                }
-            case tab: TabView =>
-                for (content in tab.getAllTabContents()) {
-                    if (widgetContains(content, target)) { return true }
-                }
-                false
-            case group: GroupBox =>
-                match (group.getContent()) {
-                    case Some(c) => widgetContains(c, target)
-                    case None => false
-                }
-            case _ => false
-        }
+    private func requestRender(): Unit {
+        needsRenderFlag = true
     }
 
     private func render(): Unit {
@@ -725,7 +667,6 @@ public class Window {
         for (widget in widgets) {
             if (widget.updateAnimation(now)) {
                 stillAnimating = true
-                markDirty(widget)
             }
         }
 
@@ -737,13 +678,23 @@ public class Window {
             unsafe { bridge_stop_animation_timer(hwnd) }
         }
 
+        // skip render in idle state (no events, no animations, no tooltip, no overlay)
+        if (!needsRenderFlag && !stillAnimating && !tooltipVisible) {
+            match (overlayWidget) {
+                case Some(_) => ()
+                case None => return
+            }
+        }
+
+        needsRenderFlag = false
+
         let canvas = Canvas(hwnd)
+        canvas.clear(bgColor)
 
         let currentWidth = unsafe { bridge_window_get_width(hwnd) }
         let currentHeight = unsafe { bridge_window_get_height(hwnd) }
 
         if (currentWidth != lastRenderW || currentHeight != lastRenderH) {
-            fullRender = true
             lastRenderW = currentWidth
             lastRenderH = currentHeight
         }
@@ -752,46 +703,16 @@ public class Window {
             case Some(mw) =>
                 match (mw.getLayoutFrame()) {
                     case Some(f) =>
-                        let newW = Float32(currentWidth) - f.x
-                        let newH = Float32(currentHeight) - f.y
-                        let oldFrame = mw.getLayoutFrame()
-                        var sizeChanged = false
-                        match (oldFrame) {
-                            case Some(of) =>
-                                if (of.width != newW || of.height != newH) { sizeChanged = true }
-                            case None => ()
-                        }
-                        if (sizeChanged) { fullRender = true }
-                        mw.setLayoutFrame(LayoutFrame(f.x, f.y, newW, newH))
+                        mw.setLayoutFrame(LayoutFrame(f.x, f.y,
+                            Float32(currentWidth) - f.x, Float32(currentHeight) - f.y))
                     case None => ()
                 }
             case None => ()
         }
 
-        // skip render entirely in idle state
-        if (!fullRender && dirtyWidgets.size == 0 && !tooltipVisible) {
-            match (overlayWidget) {
-                case Some(_) => ()
-                case None => return
-            }
+        for (widget in widgets) {
+            widget.paint(canvas, Float32(width), Float32(height), Float32(currentWidth), Float32(currentHeight))
         }
-
-        canvas.clear(bgColor)
-
-        if (fullRender) {
-            for (widget in widgets) {
-                widget.paint(canvas, Float32(width), Float32(height), Float32(currentWidth), Float32(currentHeight))
-            }
-            fullRender = false
-        } else {
-            for (widget in widgets) {
-                if (needsPaintPartial(widget)) {
-                    widget.paint(canvas, Float32(width), Float32(height), Float32(currentWidth), Float32(currentHeight))
-                }
-            }
-        }
-
-        dirtyWidgets = ArrayList<Widget>()
 
         if (tooltipVisible) {
             drawTooltip(canvas, currentWidth, currentHeight)

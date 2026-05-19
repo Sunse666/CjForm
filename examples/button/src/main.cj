@@ -12,19 +12,19 @@ main(): Int64 {
         Position.abs(200.0, 100.0), 160.0, 40.0,
         "Microsoft YaHei", 14.0, SizeScale.scalable(), Anchor.Center,
         ButtonStyle.fromTheme(), { => println("Primary clicked") })
-    win.addButton(btn1)
+    win.addWidget(btn1)
 
     let btn2 = Button("Outlined Button",
         Position.abs(200.0, 160.0), 160.0, 40.0,
         "Microsoft YaHei", 14.0, SizeScale.scalable(), Anchor.Center,
         ButtonStyle.outlined(), { => println("Outlined clicked") })
-    win.addButton(btn2)
+    win.addWidget(btn2)
 
     let btn3 = Button("Danger Button",
         Position.abs(200.0, 220.0), 140.0, 40.0,
         "Microsoft YaHei", 14.0, SizeScale.scalable(), Anchor.Center,
         ButtonStyle.bordered(2.0, Color.rgb(220, 53, 69)), { => println("Danger clicked") })
-    win.addButton(btn3)
+    win.addWidget(btn3)
 
     win.show()
     win.run()

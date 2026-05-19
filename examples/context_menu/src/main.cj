@@ -20,7 +20,7 @@ main(): Int64 {
         Position.abs(200.0, 140.0),
         Theme.colors().textSecondary,
         "Microsoft YaHei", 14.0, SizeScale.fixed(), Anchor.Center)
-    win.addLabel(label)
+    win.addWidget(label)
 
     win.show()
     win.run()

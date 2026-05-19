@@ -25,9 +25,9 @@ main(): Int64 {
         RadioButtonStyle.fromTheme())
 
     group.add(rb1); group.add(rb2); group.add(rb3)
-    win.addRadioButton(rb1)
-    win.addRadioButton(rb2)
-    win.addRadioButton(rb3)
+    win.addWidget(rb1)
+    win.addWidget(rb2)
+    win.addWidget(rb3)
 
     win.show()
     win.run()

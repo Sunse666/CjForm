@@ -12,7 +12,7 @@ main(): Int64 {
         Position.abs(200.0, 50.0),
         Theme.colors().textPrimary,
         "Microsoft YaHei", 14.0, SizeScale.fixed(), Anchor.Center)
-    win.addLabel(label)
+    win.addWidget(label)
 
     let darkBtn = Button("Dark Theme",
         Position.abs(140.0, 120.0), 120.0, 36.0,
@@ -21,7 +21,7 @@ main(): Int64 {
             Theme.setCurrent(Theme.dark())
             win.setBackgroundColor(Theme.colors().bgSecondary)
         })
-    win.addButton(darkBtn)
+    win.addWidget(darkBtn)
 
     let lightBtn = Button("Light Theme",
         Position.abs(270.0, 120.0), 120.0, 36.0,
@@ -30,7 +30,7 @@ main(): Int64 {
             Theme.setCurrent(Theme.light())
             win.setBackgroundColor(Theme.colors().bgSecondary)
         })
-    win.addButton(lightBtn)
+    win.addWidget(lightBtn)
 
     let toggleBtn = Button("Toggle Theme",
         Position.abs(200.0, 180.0), 120.0, 36.0,
@@ -39,7 +39,7 @@ main(): Int64 {
             Theme.toggle()
             win.setBackgroundColor(Theme.colors().bgSecondary)
         })
-    win.addButton(toggleBtn)
+    win.addWidget(toggleBtn)
 
     win.show()
     win.run()

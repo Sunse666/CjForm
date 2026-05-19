@@ -13,25 +13,25 @@ main(): Int64 {
         "Microsoft YaHei", 14.0, SizeScale.scalable(),
         CheckBoxStyle.fromTheme(), true)
     cb1.setOnCheckedChanged({ v => println("Notifications: ${v}") })
-    win.addCheckBox(cb1)
+    win.addWidget(cb1)
 
     let cb2 = CheckBox("Auto save enabled",
         Position.abs(20.0, 90.0),
         "Microsoft YaHei", 14.0, SizeScale.scalable(),
         CheckBoxStyle.fromTheme(), false)
-    win.addCheckBox(cb2)
+    win.addWidget(cb2)
 
     let cb3 = CheckBox("Dark mode",
         Position.abs(20.0, 140.0),
         "Microsoft YaHei", 14.0, SizeScale.scalable(),
         CheckBoxStyle.fromTheme(), true)
-    win.addCheckBox(cb3)
+    win.addWidget(cb3)
 
     let cb4 = CheckBox("Compact layout",
         Position.abs(20.0, 190.0),
         "Microsoft YaHei", 14.0, SizeScale.scalable(),
         CheckBoxStyle.fromTheme(), false)
-    win.addCheckBox(cb4)
+    win.addWidget(cb4)
 
     win.show()
     win.run()

@@ -27,24 +27,24 @@ main(): Int64 {
 
     let title = Label.styled("title", "StyleSheet Demo",
         Position.abs(20.0, 30.0), Theme.colors().accent)
-    win.addLabel(title)
+    win.addWidget(title)
 
     let info = Label("All buttons below use styled() factory — " +
         "font and anchor come from the stylesheet.",
         Position.abs(20.0, 70.0),
         Theme.colors().textSecondary,
         "Microsoft YaHei", 12.0, SizeScale.fixed(), Anchor.CenterLeft)
-    win.addLabel(info)
+    win.addWidget(info)
 
     let btn1 = Button.styled("btn", "Primary Button",
         Position.abs(200.0, 150.0), 160.0, 36.0,
         ButtonStyle.fromTheme(), { => println("Primary") })
-    win.addButton(btn1)
+    win.addWidget(btn1)
 
     let btn2 = Button.styled("btn", "Outlined Button",
         Position.abs(200.0, 210.0), 160.0, 36.0,
         ButtonStyle.outlined(), { => println("Outlined") })
-    win.addButton(btn2)
+    win.addWidget(btn2)
 
     win.show()
     win.run()

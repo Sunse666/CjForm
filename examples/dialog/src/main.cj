@@ -16,7 +16,7 @@ main(): Int64 {
                 MessageBoxIcon.Info, MessageBoxButtons.Ok)
             println("Info dialog result: ${convertResult(result)}")
         })
-    win.addButton(btn1)
+    win.addWidget(btn1)
 
     let btn2 = Button("Warning Dialog",
         Position.abs(200.0, 120.0), 160.0, 36.0,
@@ -26,7 +26,7 @@ main(): Int64 {
                 MessageBoxIcon.Warning, MessageBoxButtons.Ok)
             println("Warning dialog result: ${convertResult(result)}")
         })
-    win.addButton(btn2)
+    win.addWidget(btn2)
 
     let btn3 = Button("Error Dialog",
         Position.abs(200.0, 180.0), 160.0, 36.0,
@@ -36,7 +36,7 @@ main(): Int64 {
                 MessageBoxIcon.Error, MessageBoxButtons.Ok)
             println("Error dialog result: ${convertResult(result)}")
         })
-    win.addButton(btn3)
+    win.addWidget(btn3)
 
     let btn4 = Button("Question Dialog",
         Position.abs(200.0, 240.0), 160.0, 36.0,
@@ -46,7 +46,7 @@ main(): Int64 {
                 MessageBoxIcon.Question, MessageBoxButtons.YesNo)
             println("Question dialog result: ${convertResult(result)}")
         })
-    win.addButton(btn4)
+    win.addWidget(btn4)
 
     win.show()
     win.run()

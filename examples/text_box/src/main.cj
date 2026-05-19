@@ -12,21 +12,21 @@ main(): Int64 {
         Position.abs(200.0, 70.0), 260.0, 32.0,
         "Microsoft YaHei", 14.0, SizeScale.scalable(),
         TextBoxStyle.fromTheme(), "Enter your name...")
-    win.addTextBox(nameBox)
+    win.addWidget(nameBox)
 
     let pwBox = TextBox(
         Position.abs(200.0, 130.0), 260.0, 32.0,
         "Microsoft YaHei", 14.0, SizeScale.scalable(),
         TextBoxStyle.fromTheme(), "Enter password...")
     pwBox.setPasswordMode(true)
-    win.addTextBox(pwBox)
+    win.addWidget(pwBox)
 
     let searchBox = TextBox(
         Position.abs(200.0, 190.0), 260.0, 32.0,
         "Microsoft YaHei", 14.0, SizeScale.scalable(),
         TextBoxStyle.fromTheme(), "Search...")
     searchBox.setOnTextChanged({ text => println("Search: ${text}") })
-    win.addTextBox(searchBox)
+    win.addWidget(searchBox)
 
     win.show()
     win.run()

@@ -70,8 +70,8 @@ main(): Int64 {
         win.setBackgroundColor(Theme.colors().bgSecondary)
     })
 
-    win.addLabel(titleLabel)
-    win.addButton(themeToggleBtn)
+    win.addWidget(titleLabel)
+    win.addWidget(themeToggleBtn)
     win.addWidget(themeCombo)
     win.addWidget(tabView)
     win.setMainWidget(tabView)

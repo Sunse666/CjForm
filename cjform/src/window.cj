@@ -150,44 +150,8 @@ public class Window {
         registerChildren(widget)
     }
 
-    public func addLabel(label: Label): Unit {
-        widgets.add(label)
-    }
-
-    public func addButton(button: Button): Unit {
-        widgets.add(button)
-    }
-
-    public func addTextBox(textBox: TextBox): Unit {
-        widgets.add(textBox)
-        focusManager.register(textBox)
-        textBox.setParentHwnd(hwnd)
-    }
-
     public func addNativeTextBox(textBox: NativeTextBox): Unit {
         nativeControls.add(textBox)
-    }
-
-    public func addCheckBox(checkBox: CheckBox): Unit {
-        widgets.add(checkBox)
-    }
-
-    public func addRadioButton(radioButton: RadioButton): Unit {
-        widgets.add(radioButton)
-    }
-
-    public func addSlider(slider: Slider): Unit {
-        widgets.add(slider)
-    }
-
-    public func addVBox(vbox: VBox): Unit {
-        widgets.add(vbox)
-        registerChildren(vbox)
-    }
-
-    public func addHBox(hbox: HBox): Unit {
-        widgets.add(hbox)
-        registerChildren(hbox)
     }
 
     private func registerChildren(widget: Widget): Unit {

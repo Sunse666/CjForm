@@ -146,3 +146,4 @@ foreign func bridge_config_write_int(section: CString, key: CString, value: Int3
 foreign func bridge_config_read_int(section: CString, key: CString, defaultVal: Int32): Int32
 
 foreign func bridge_is_null_ptr(ptr: CPointer<Byte>): Bool
+foreign func bridge_get_dpi_scale(hwnd: CPointer<Byte>): Float32

@@ -2,12 +2,15 @@ package cjform
 
 public class Canvas {
     private let hwnd: CPointer<Byte>
-    
+    private let dpiScale: Float32
+
     public init(hwnd: CPointer<Byte>) {
         this.hwnd = hwnd
+        this.dpiScale = ffi_getDpiScale(hwnd)
     }
 
     public func getHwnd(): CPointer<Byte> { hwnd }
+    public func getDpiScale(): Float32 { dpiScale }
     
     public func clear(color: Color): Unit {
         unsafe {

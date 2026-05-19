@@ -118,8 +118,16 @@ static LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM l
 }
 
 __declspec(dllexport) void* bridge_gdip_init() {
+    SetProcessDPIAware();
     GdiplusStartup(&g_gdiplusToken, &g_gdiplusInput, NULL);
     return (void*)g_gdiplusToken;
+}
+
+__declspec(dllexport) float bridge_get_dpi_scale(HWND hwnd) {
+    HDC hdc = GetDC(hwnd);
+    int dpi = GetDeviceCaps(hdc, LOGPIXELSX);
+    ReleaseDC(hwnd, hdc);
+    return dpi / 96.0f;
 }
 
 __declspec(dllexport) void bridge_gdip_cleanup() {

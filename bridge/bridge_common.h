@@ -170,6 +170,7 @@ __declspec(dllexport) void bridge_config_write_int(const char* section, const ch
 __declspec(dllexport) int bridge_config_read_int(const char* section, const char* key, int defaultVal);
 
 __declspec(dllexport) bool bridge_is_null_ptr(void* ptr);
+__declspec(dllexport) float bridge_get_dpi_scale(HWND hwnd);
 
 }
 

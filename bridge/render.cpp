@@ -1,5 +1,13 @@
 #include "bridge_common.h"
 
+static float scale_font_size(HWND hwnd, float font_size) {
+    HDC hdc = GetDC(hwnd);
+    int dpi = GetDeviceCaps(hdc, LOGPIXELSX);
+    ReleaseDC(hwnd, hdc);
+    if (dpi <= 0) dpi = 96;
+    return font_size * dpi / 96.0f;
+}
+
 __declspec(dllexport) void bridge_gdip_push_clip(HWND hwnd, float x, float y, float w, float h) {
     WindowContext* ctx = (WindowContext*)GetPropW(hwnd, L"CjFormCtx");
     if (ctx) { ctx->hasClipRect = true; ctx->clipX = x; ctx->clipY = y; ctx->clipW = w; ctx->clipH = h; }
@@ -32,7 +40,7 @@ __declspec(dllexport) void bridge_gdip_draw_text(HWND hwnd, float x, float y, co
         wchar_t* fw = font_family ? utf8_to_utf16(font_family) : NULL;
         if (tw) {
             FontFamily ff(fw ? fw : L"Microsoft YaHei");
-            Font f(&ff, font_size, FontStyleRegular, UnitPixel);
+            Font f(&ff, scale_font_size(hwnd, font_size), FontStyleRegular, UnitPixel);
             SolidBrush br(Color(a, r, g, b));
             StringFormat fmt(StringFormat::GenericTypographic());
             fmt.SetAlignment(StringAlignmentNear);
@@ -87,7 +95,7 @@ __declspec(dllexport) void bridge_gdip_measure_text(HWND hwnd, const char* text,
         if (tw) {
             wchar_t* fw = font_family ? utf8_to_utf16(font_family) : NULL;
             FontFamily ff(fw ? fw : L"Microsoft YaHei");
-            Font f(&ff, font_size, FontStyleRegular, UnitPixel);
+            Font f(&ff, scale_font_size(hwnd, font_size), FontStyleRegular, UnitPixel);
             StringFormat fmt(StringFormat::GenericTypographic());
             RectF br; graphics.MeasureString(tw, -1, &f, PointF(0, 0), &fmt, &br);
             *out_width = br.Width; *out_height = br.Height;
@@ -155,7 +163,7 @@ __declspec(dllexport) void bridge_gdip_draw_text_aligned(HWND hwnd, float x, flo
         wchar_t* fw = font_family ? utf8_to_utf16(font_family) : NULL;
         if (tw) {
             FontFamily ff(fw ? fw : L"Microsoft YaHei");
-            Font f(&ff, font_size, FontStyleRegular, UnitPixel);
+            Font f(&ff, scale_font_size(hwnd, font_size), FontStyleRegular, UnitPixel);
             SolidBrush br(Color(a, r, g, b));
             StringFormat fmt(StringFormat::GenericTypographic());
             if (alignment == 0) fmt.SetAlignment(StringAlignmentNear);
@@ -216,7 +224,7 @@ __declspec(dllexport) float bridge_gdip_measure_text_range(HWND hwnd, const char
     graphics.SetTextRenderingHint(TextRenderingHintClearTypeGridFit);
     wchar_t* fw = font_family ? utf8_to_utf16(font_family) : NULL;
     FontFamily ff(fw ? fw : L"Microsoft YaHei");
-    Font f(&ff, font_size, FontStyleRegular, UnitPixel);
+    Font f(&ff, scale_font_size(hwnd, font_size), FontStyleRegular, UnitPixel);
     if (fw) free(fw);
 
     StringFormat fmt(StringFormat::GenericTypographic());

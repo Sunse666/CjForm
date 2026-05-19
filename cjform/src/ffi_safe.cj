@@ -171,6 +171,11 @@ public func ffi_isNullPtr(ptr: CPointer<Byte>): Bool {
 
 // --- GDI+ ---
 
+public func ffi_getDpiScale(hwnd: CPointer<Byte>): Float32 {
+    let scale = unsafe { bridge_get_dpi_scale(hwnd) }
+    if (scale <= 0.0) { 1.0 } else { scale }
+}
+
 public func ffi_gdipInit(): Bool {
     let token = unsafe { bridge_gdip_init() }
     let ok = !ffi_isNullPtr(token)

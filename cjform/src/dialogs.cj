@@ -80,17 +80,10 @@ public class ShortcutManager {
         for (i in 0..shortcuts.size) {
             let e = shortcuts[i]
             let sn = "shortcut_${i}"
-            let section = unsafe { LibC.mallocCString(sn) }
-            let kk = unsafe { LibC.mallocCString("keyCode") }
-            let ck = unsafe { LibC.mallocCString("ctrl") }
-            let sk = unsafe { LibC.mallocCString("shift") }
-            let ak = unsafe { LibC.mallocCString("alt") }
-            unsafe {
-                bridge_config_write_int(section, kk, Int32(e.keyCode))
-                bridge_config_write_int(section, ck, if (e.ctrl) { 1 } else { 0 })
-                bridge_config_write_int(section, sk, if (e.shift) { 1 } else { 0 })
-                bridge_config_write_int(section, ak, if (e.alt) { 1 } else { 0 })
-            }
+            ffi_configWriteInt(sn, "keyCode", Int32(e.keyCode))
+            ffi_configWriteInt(sn, "ctrl", if (e.ctrl) { 1 } else { 0 })
+            ffi_configWriteInt(sn, "shift", if (e.shift) { 1 } else { 0 })
+            ffi_configWriteInt(sn, "alt", if (e.alt) { 1 } else { 0 })
         }
     }
 
@@ -98,16 +91,11 @@ public class ShortcutManager {
         var i: Int32 = 0
         while (true) {
             let sn = "shortcut_${i}"
-            let section = unsafe { LibC.mallocCString(sn) }
-            let kk = unsafe { LibC.mallocCString("keyCode") }
-            let ck = unsafe { LibC.mallocCString("ctrl") }
-            let sk = unsafe { LibC.mallocCString("shift") }
-            let ak = unsafe { LibC.mallocCString("alt") }
-            let keyCode = unsafe { bridge_config_read_int(section, kk, -1) }
+            let keyCode = ffi_configReadInt(sn, "keyCode", -1)
             if (keyCode < 0) { break }
-            let ctrl = unsafe { bridge_config_read_int(section, ck, 0) } != 0
-            let shift = unsafe { bridge_config_read_int(section, sk, 0) } != 0
-            let alt = unsafe { bridge_config_read_int(section, ak, 0) } != 0
+            let ctrl = ffi_configReadInt(sn, "ctrl", 0) != 0
+            let shift = ffi_configReadInt(sn, "shift", 0) != 0
+            let alt = ffi_configReadInt(sn, "alt", 0) != 0
             let actionName = "shortcut_${i}"
             match (actionMap(actionName)) {
                 case Some(action) => register(UInt32(keyCode), ctrl, shift, alt, action)
@@ -297,22 +285,9 @@ class MessageBoxDialog <: Widget {
 }
 
 public func showOpenDialog(win: Window, title: String, filter: String): Option<String> {
-    let titleCStr = unsafe { LibC.mallocCString(title) }
-    let filterCStr = unsafe { LibC.mallocCString(filter) }
-    let resultPtr = unsafe { bridge_show_open_dialog(win.getHandle(), titleCStr, filterCStr, false) }
-    unsafe { LibC.free(titleCStr); LibC.free(filterCStr) }
-    let path = unsafe { CString(resultPtr) }.toString()
-    unsafe { bridge_free_string(resultPtr) }
-    if (path.size == 0) { None<String> } else { Some(path) }
+    ffi_showOpenDialog(win.getHandle(), title, filter, false)
 }
 
 public func showSaveDialog(win: Window, title: String, filter: String, defaultName: String): Option<String> {
-    let titleCStr = unsafe { LibC.mallocCString(title) }
-    let filterCStr = unsafe { LibC.mallocCString(filter) }
-    let nameCStr = unsafe { LibC.mallocCString(defaultName) }
-    let resultPtr = unsafe { bridge_show_save_dialog(win.getHandle(), titleCStr, filterCStr, nameCStr) }
-    unsafe { LibC.free(titleCStr); LibC.free(filterCStr); LibC.free(nameCStr) }
-    let path = unsafe { CString(resultPtr) }.toString()
-    unsafe { bridge_free_string(resultPtr) }
-    if (path.size == 0) { None<String> } else { Some(path) }
+    ffi_showSaveDialog(win.getHandle(), title, filter, defaultName)
 }

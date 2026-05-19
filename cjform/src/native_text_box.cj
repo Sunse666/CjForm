@@ -12,30 +12,16 @@ public class NativeTextBox {
         this.y = y
         this.width = width
         this.height = height
-        
-        let placeholderCStr = unsafe { LibC.mallocCString(placeholder) }
-        this.hEdit = unsafe { bridge_edit_create(parent, x, y, width, height, placeholderCStr) }
-        unsafe { LibC.free(placeholderCStr) }
+        this.hEdit = ffi_editCreate(parent, x, y, width, height, placeholder)
     }
     
     public func destroy(): Unit {
         unsafe { bridge_edit_destroy(hEdit) }
     }
     
-    public func setText(text: String): Unit {
-        let textCStr = unsafe { LibC.mallocCString(text) }
-        unsafe { bridge_edit_set_text(hEdit, textCStr) }
-        unsafe { LibC.free(textCStr) }
-    }
+    public func setText(text: String): Unit { ffi_editSetText(hEdit, text) }
     
-    public func getText(): String {
-        let buffer = unsafe { LibC.malloc<Byte>(count: 256) }
-        unsafe { bridge_edit_get_text(hEdit, buffer, 256) }
-        let cStr = unsafe { CString(buffer) }
-        let result = cStr.toString()
-        unsafe { LibC.free(buffer) }
-        result
-    }
+    public func getText(): String { ffi_editGetText(hEdit) }
     
     public func setFocus(): Unit {
         unsafe { bridge_edit_set_focus(hEdit) }

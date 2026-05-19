@@ -79,18 +79,7 @@ public class Canvas {
 
     public func measureTextWidth(text: String, fontFamily: String, fontSize: Float32): Float32 {
         if (text.size == 0) { return 0.0 }
-        unsafe {
-            let textCStr = LibC.mallocCString(text)
-            let fontCStr = LibC.mallocCString(fontFamily)
-            let wPtr = LibC.malloc<Float32>(count: 1)
-            let hPtr = LibC.malloc<Float32>(count: 1)
-            bridge_gdip_measure_text(hwnd, textCStr, fontCStr, fontSize, wPtr, hPtr)
-            let result = wPtr.read()
-            LibC.free(textCStr)
-            LibC.free(fontCStr)
-            LibC.free(wPtr)
-            LibC.free(hPtr)
-            result
-        }
+        let (w, _) = ffi_measureText(hwnd, text, fontFamily, fontSize)
+        w
     }
 }

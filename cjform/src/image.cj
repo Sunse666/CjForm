@@ -31,16 +31,11 @@ public class Image <: Widget {
     private func ensureLoaded(): Unit {
         if (loaded) { return }
         loaded = true
-        let pathCStr = unsafe { LibC.mallocCString(filePath) }
-        let bmp = unsafe { bridge_gdip_load_image(pathCStr) }
-        unsafe { LibC.free(pathCStr) }
+        let bmp = ffi_loadImage(filePath)
         bitmap = Some(bmp)
-        let wPtr = unsafe { LibC.malloc<Float32>(count: 1) }
-        let hPtr = unsafe { LibC.malloc<Float32>(count: 1) }
-        unsafe { bridge_gdip_get_image_size(bmp, wPtr, hPtr) }
-        imgW = unsafe { wPtr.read() }
-        imgH = unsafe { hPtr.read() }
-        unsafe { LibC.free(wPtr); LibC.free(hPtr) }
+        let (w, h) = ffi_getImageSize(bmp)
+        imgW = w
+        imgH = h
     }
 
     public func paint(canvas: Canvas, initialWidth: Float32, initialHeight: Float32, currentWidth: Float32, currentHeight: Float32): Unit {
@@ -50,7 +45,7 @@ public class Image <: Widget {
             match (bitmap) {
                 case Some(bmp) =>
                     let (dx, dy, dw, dh) = calcDestRect(x, y, w, h)
-                    unsafe { bridge_gdip_draw_image(canvas.getHwnd(), bmp, dx, dy, dw, dh) }
+                    ffi_drawImage(canvas.getHwnd(), bmp, dx, dy, dw, dh)
                 case None => ()
             }
         } else {

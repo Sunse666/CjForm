@@ -61,8 +61,7 @@ public class Window {
 
         unsafe { bridge_gdip_init() }
 
-        let titleCStr = unsafe { LibC.mallocCString(title) }
-        this.hwnd = unsafe { bridge_window_create(titleCStr, width, height, true, false, false) }
+        this.hwnd = ffi_windowCreate(title, width, height, true, false, false)
 
         unsafe { bridge_window_set_dark_mode(hwnd, Theme.getCurrent().isDark) }
 
@@ -74,18 +73,13 @@ public class Window {
     }
 
     private func loadWindowState(): Unit {
-        let ws = unsafe { LibC.mallocCString("window") }
-        let xk = unsafe { LibC.mallocCString("x") }
-        let yk = unsafe { LibC.mallocCString("y") }
-        let wk = unsafe { LibC.mallocCString("w") }
-        let hk = unsafe { LibC.mallocCString("h") }
-        let x = unsafe { bridge_config_read_int(ws, xk, -1) }
+        let x = ffi_configReadInt("window", "x", -1)
         if (x >= 0) {
-            let y = unsafe { bridge_config_read_int(ws, yk, -1) }
+            let y = ffi_configReadInt("window", "y", -1)
             if (y >= 0) {
-                let w = unsafe { bridge_config_read_int(ws, wk, -1) }
+                let w = ffi_configReadInt("window", "w", -1)
                 if (w > 0) {
-                    let h = unsafe { bridge_config_read_int(ws, hk, -1) }
+                    let h = ffi_configReadInt("window", "h", -1)
                     if (h > 0) {
                         unsafe { bridge_window_set_pos(hwnd, x, y, w, h) }
                     }
@@ -95,17 +89,14 @@ public class Window {
     }
 
     private func saveWindowState(): Unit {
-        let ws = unsafe { LibC.mallocCString("window") }
         let x = unsafe { bridge_window_get_x(hwnd) }
         let y = unsafe { bridge_window_get_y(hwnd) }
         let w = unsafe { bridge_window_get_width(hwnd) }
         let h = unsafe { bridge_window_get_height(hwnd) }
-        unsafe {
-            bridge_config_write_int(ws, LibC.mallocCString("x"), x)
-            bridge_config_write_int(ws, LibC.mallocCString("y"), y)
-            bridge_config_write_int(ws, LibC.mallocCString("w"), w)
-            bridge_config_write_int(ws, LibC.mallocCString("h"), h)
-        }
+        ffi_configWriteInt("window", "x", x)
+        ffi_configWriteInt("window", "y", y)
+        ffi_configWriteInt("window", "w", w)
+        ffi_configWriteInt("window", "h", h)
     }
 
     public func setResizable(resizable: Bool): Unit { this.isResizable = resizable }
@@ -460,13 +451,13 @@ public class Window {
                         w.handleEvent(Event.mouseEnter())
                         w.handleEvent(Event.mouseMove(x, y))
                         hoveredWidget = Some<Widget>(w)
-                        hoverStartTime = unsafe { bridge_get_tick_count() }
+                        hoverStartTime = ffi_getTickCount()
                         tooltipVisible = false
                     case None =>
                         w.handleEvent(Event.mouseEnter())
                         w.handleEvent(Event.mouseMove(x, y))
                         hoveredWidget = Some<Widget>(w)
-                        hoverStartTime = unsafe { bridge_get_tick_count() }
+                        hoverStartTime = ffi_getTickCount()
                         tooltipVisible = false
                 }
             case None =>
@@ -482,7 +473,7 @@ public class Window {
         match (hoveredWidget) {
             case Some(w) =>
                 if (!tooltipVisible) {
-                    let now = unsafe { bridge_get_tick_count() }
+                    let now = ffi_getTickCount()
                     if (now - hoverStartTime >= 500) {
                         tooltipVisible = true
                     }
@@ -637,7 +628,7 @@ public class Window {
     }
 
     private func render(): Unit {
-        let now = unsafe { bridge_get_tick_count() }
+        let now = ffi_getTickCount()
         var stillAnimating = false
         for (widget in widgets) {
             if (widget.updateAnimation(now)) {

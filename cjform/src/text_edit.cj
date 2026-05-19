@@ -193,7 +193,7 @@ public class TextEdit <: Widget {
     }
 
     public func paint(canvas: Canvas, initialWidth: Float32, initialHeight: Float32, currentWidth: Float32, currentHeight: Float32): Unit {
-        let now = unsafe { bridge_get_tick_count() }
+        let now = ffi_getTickCount()
         if (lastBlinkTime == 0) {
             lastBlinkTime = now
         } else if (now - lastBlinkTime >= 250) {
@@ -371,7 +371,7 @@ public class TextEdit <: Widget {
                 scrollY = scrollAnimY.getValue()
                 scrollAnimY.start(scrollY, targetScrollY, 150, Easing.EaseOut)
                 barOpacity = 1.0
-                lastWheelTime = unsafe { bridge_get_tick_count() }
+                lastWheelTime = ffi_getTickCount()
                 true
             case None => false
         }
@@ -730,9 +730,7 @@ public class TextEdit <: Widget {
         if (!hasSelection()) { return }
         let selected = getSelectedText()
         if (selected.size > 0) {
-            let cstr = unsafe { LibC.mallocCString(selected) }
-            unsafe { bridge_clipboard_set_text(cstr) }
-            unsafe { LibC.free(cstr) }
+            ffi_clipboardSetText(selected)
         }
     }
 
@@ -742,11 +740,8 @@ public class TextEdit <: Widget {
     }
 
     private func paste(): Unit {
-        let buffer = unsafe { LibC.malloc<Byte>(count: 4096) }
-        let len = unsafe { bridge_clipboard_get_text(buffer, 4096) }
-        if (len > 0) {
-            let cStr = unsafe { CString(buffer) }
-            let clipText = cStr.toString()
+        let clipText = ffi_clipboardGetText()
+        if (clipText.size > 0) {
             redoStack = ArrayList<UndoEntry>()
             if (hasSelection()) { deleteSelectionRaw(false) }
             for (r in clipText.runes()) {
@@ -759,7 +754,6 @@ public class TextEdit <: Widget {
             notifyChanged()
             ensureCursorVisible()
         }
-        unsafe { LibC.free(buffer) }
     }
 
     private func insertCharRaw(ch: Rune): Unit {
@@ -947,13 +941,7 @@ public class TextEdit <: Widget {
 
     private func measureLineUpTo(line: String, charCount: Int64): Float32 {
         match (parentHwnd) {
-            case Some(h) =>
-                let cstr = unsafe { LibC.mallocCString(line) }
-                let fcstr = unsafe { LibC.mallocCString(fontFamily) }
-                let result = unsafe { bridge_gdip_measure_text_range(h, cstr, Int32(charCount), fcstr, fontSize) }
-                unsafe { LibC.free(fcstr) }
-                unsafe { LibC.free(cstr) }
-                result
+            case Some(h) => ffi_measureTextRange(h, line, Int32(charCount), fontFamily, fontSize)
             case None => Float32(charCount) * avgCharW
         }
     }
@@ -987,7 +975,7 @@ public class TextEdit <: Widget {
         scrollY = scrollAnimY.getValue()
         scrollAnimY.start(scrollY, targetScrollY, 100, Easing.EaseOut)
         barOpacity = 1.0
-        lastWheelTime = unsafe { bridge_get_tick_count() }
+        lastWheelTime = ffi_getTickCount()
     }
 
     private func notifyChanged(): Unit {

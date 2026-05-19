@@ -190,7 +190,7 @@ public class TextBox <: Widget {
     }
 
     public func paint(canvas: Canvas, initialWidth: Float32, initialHeight: Float32, currentWidth: Float32, currentHeight: Float32): Unit {
-        let now = unsafe { bridge_get_tick_count() }
+        let now = ffi_getTickCount()
         if (awakeCaret) {
             awakeCaret = false
             lastBlinkTime = now
@@ -309,18 +309,7 @@ public class TextBox <: Widget {
     private func measureTextWidth(text: String, fs: Float32, runeCount: Int64): Float32 {
         if (runeCount == 0) { return 0.0 }
         match (parentHwnd) {
-            case Some(h) =>
-                let cstr = unsafe { LibC.mallocCString(text) }
-                let fcstr = unsafe { LibC.mallocCString(fontFamily) }
-                let wPtr = unsafe { LibC.malloc<Float32>(count: 1) }
-                let hPtr = unsafe { LibC.malloc<Float32>(count: 1) }
-                unsafe { bridge_gdip_measure_text(h, cstr, fcstr, fs, wPtr, hPtr) }
-                let result = unsafe { wPtr.read() }
-                unsafe { LibC.free(cstr) }
-                unsafe { LibC.free(fcstr) }
-                unsafe { LibC.free(wPtr) }
-                unsafe { LibC.free(hPtr) }
-                result
+            case Some(h) => let (w, _) = ffi_measureText(h, text, fontFamily, fs); w
             case None => fs * 0.6 * Float32(runeCount)
         }
     }
@@ -329,13 +318,7 @@ public class TextBox <: Widget {
         if (index <= 0) { return 0.0 }
         if (text.size == 0) { return 0.0 }
         match (parentHwnd) {
-            case Some(h) =>
-                let cstr = unsafe { LibC.mallocCString(text) }
-                let fcstr = unsafe { LibC.mallocCString(fontFamily) }
-                let result = unsafe { bridge_gdip_measure_text_range(h, cstr, Int32(index), fcstr, fs) }
-                unsafe { LibC.free(fcstr) }
-                unsafe { LibC.free(cstr) }
-                result
+            case Some(h) => ffi_measureTextRange(h, text, Int32(index), fontFamily, fs)
             case None => fs * 0.6 * Float32(index)
         }
     }
@@ -687,9 +670,7 @@ public class TextBox <: Widget {
     private func copyToClipboard(): Unit {
         let selected = getSelectedText()
         if (selected.size > 0) {
-            let cstr = unsafe { LibC.mallocCString(selected) }
-            unsafe { bridge_clipboard_set_text(cstr) }
-            unsafe { LibC.free(cstr) }
+            ffi_clipboardSetText(selected)
         }
     }
 
@@ -699,11 +680,8 @@ public class TextBox <: Widget {
     }
 
     private func pasteFromClipboard(): Unit {
-        let buffer = unsafe { LibC.malloc<Byte>(count: 4096) }
-        let len = unsafe { bridge_clipboard_get_text(buffer, 4096) }
-        if (len > 0) {
-            let cStr = unsafe { CString(buffer) }
-            let clipText = cStr.toString()
+        let clipText = ffi_clipboardGetText()
+        if (clipText.size > 0) {
             if (hasSelection()) {
                 deleteSelection()
             }
@@ -716,7 +694,6 @@ public class TextBox <: Widget {
             showCaret()
             ensureCaretVisible()
         }
-        unsafe { LibC.free(buffer) }
     }
 
     private func handleKeyChar(event: Event): Bool {

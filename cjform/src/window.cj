@@ -30,6 +30,10 @@ public class Window {
     private var overlayWidget: Option<Widget>
     private var mainWidget: Option<Widget>
     private var onFileDrop: Option<(ArrayList<String>) -> Unit>
+    private var dirtyWidgets: ArrayList<Widget>
+    private var fullRender: Bool
+    private var lastRenderW: Int32
+    private var lastRenderH: Int32
 
     public init(title: String, width: Int32, height: Int32) {
         this.title = title
@@ -58,6 +62,10 @@ public class Window {
         this.contextMenu = None<ContextMenu>
         this.mainWidget = None<Widget>
         this.onFileDrop = None<(ArrayList<String>) -> Unit>
+        this.dirtyWidgets = ArrayList<Widget>()
+        this.fullRender = true
+        this.lastRenderW = -1
+        this.lastRenderH = -1
 
         ffi_gdipInit()
 
@@ -288,6 +296,10 @@ public class Window {
 
             unsafe { bridge_window_clear_key_event(hwnd) }
 
+            match (focusedWidget) {
+                case Some(fw) => markDirty(fw)
+                case None => ()
+            }
             processKeyEvent(keyCode, keyEventType, keyChar, ctrlDown, shiftDown, altDown)
 
             render()
@@ -313,6 +325,7 @@ public class Window {
             if (!handled) {
                 for (widget in widgets) {
                     if (widget.hitTest(Float32(wheelX), Float32(wheelY), Float32(width), Float32(height), Float32(curW), Float32(curH))) {
+                        markDirty(widget)
                         if (widget.handleEvent(wheelEvent)) { break }
                     }
                 }
@@ -475,14 +488,17 @@ public class Window {
                 match (hoveredWidget) {
                     case Some(old) =>
                         old.handleEvent(Event.mouseLeave())
+                        markDirty(old)
                         w.handleEvent(Event.mouseEnter())
                         w.handleEvent(Event.mouseMove(x, y))
+                        markDirty(w)
                         hoveredWidget = Some<Widget>(w)
                         hoverStartTime = ffi_getTickCount()
                         tooltipVisible = false
                     case None =>
                         w.handleEvent(Event.mouseEnter())
                         w.handleEvent(Event.mouseMove(x, y))
+                        markDirty(w)
                         hoveredWidget = Some<Widget>(w)
                         hoverStartTime = ffi_getTickCount()
                         tooltipVisible = false
@@ -491,6 +507,7 @@ public class Window {
                 match (hoveredWidget) {
                     case Some(old) =>
                         old.handleEvent(Event.mouseLeave())
+                        markDirty(old)
                         hoveredWidget = None<Widget>
                         tooltipVisible = false
                     case None => ()
@@ -581,6 +598,7 @@ public class Window {
                 }
 
                 leaf.handleEvent(Event.mouseDown(x, y, button))
+                markDirty(leaf)
                 pressedWidget = Some<Widget>(leaf)
                 break
             }
@@ -613,6 +631,7 @@ public class Window {
         match (pressedWidget) {
             case Some(w) =>
                 w.handleEvent(Event.mouseUp(x, y, 1))
+                markDirty(w)
                 pressedWidget = None<Widget>
                 return
             case None => ()
@@ -622,6 +641,7 @@ public class Window {
             case Some(w) =>
                 let leaf = getLeafWidget(w, x, y)
                 leaf.handleEvent(Event.mouseUp(x, y, 1))
+                markDirty(leaf)
                 match (leaf) {
                     case slider: Slider =>
                         slider.handleEvent(Event.mouseUp(x, y, 1))
@@ -632,10 +652,15 @@ public class Window {
                     if (widget.hitTest(x, y, Float32(width), Float32(height), currentWidth, currentHeight)) {
                         let leaf = getLeafWidget(widget, x, y)
                         leaf.handleEvent(Event.mouseUp(x, y, 1))
+                        markDirty(leaf)
                         break
                     }
                 }
         }
+    }
+
+    private func markDirty(widget: Widget): Unit {
+        dirtyWidgets.add(widget)
     }
 
     private func render(): Unit {
@@ -644,6 +669,7 @@ public class Window {
         for (widget in widgets) {
             if (widget.updateAnimation(now)) {
                 stillAnimating = true
+                markDirty(widget)
             }
         }
 
@@ -656,25 +682,49 @@ public class Window {
         }
 
         let canvas = Canvas(hwnd)
-        canvas.clear(bgColor)
 
         let currentWidth = unsafe { bridge_window_get_width(hwnd) }
         let currentHeight = unsafe { bridge_window_get_height(hwnd) }
+
+        if (currentWidth != lastRenderW || currentHeight != lastRenderH) {
+            fullRender = true
+            lastRenderW = currentWidth
+            lastRenderH = currentHeight
+        }
 
         match (mainWidget) {
             case Some(mw) =>
                 match (mw.getLayoutFrame()) {
                     case Some(f) =>
-                        mw.setLayoutFrame(LayoutFrame(f.x, f.y,
-                            Float32(currentWidth) - f.x, Float32(currentHeight) - f.y))
+                        let newW = Float32(currentWidth) - f.x
+                        let newH = Float32(currentHeight) - f.y
+                        let oldFrame = mw.getLayoutFrame()
+                        var sizeChanged = false
+                        match (oldFrame) {
+                            case Some(of) =>
+                                if (of.width != newW || of.height != newH) { sizeChanged = true }
+                            case None => ()
+                        }
+                        if (sizeChanged) { fullRender = true }
+                        mw.setLayoutFrame(LayoutFrame(f.x, f.y, newW, newH))
                     case None => ()
                 }
             case None => ()
         }
 
-        for (widget in widgets) {
-            widget.paint(canvas, Float32(width), Float32(height), Float32(currentWidth), Float32(currentHeight))
+        if (fullRender) {
+            canvas.clear(bgColor)
+            for (widget in widgets) {
+                widget.paint(canvas, Float32(width), Float32(height), Float32(currentWidth), Float32(currentHeight))
+            }
+            fullRender = false
+        } else if (dirtyWidgets.size > 0) {
+            for (widget in dirtyWidgets) {
+                widget.paint(canvas, Float32(width), Float32(height), Float32(currentWidth), Float32(currentHeight))
+            }
         }
+
+        dirtyWidgets = ArrayList<Widget>()
 
         if (tooltipVisible) {
             drawTooltip(canvas, currentWidth, currentHeight)

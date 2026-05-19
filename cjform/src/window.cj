@@ -30,9 +30,6 @@ public class Window {
     private var overlayWidget: Option<Widget>
     private var mainWidget: Option<Widget>
     private var onFileDrop: Option<(ArrayList<String>) -> Unit>
-    private var needsRenderFlag: Bool
-    private var lastRenderW: Int32
-    private var lastRenderH: Int32
 
     public init(title: String, width: Int32, height: Int32) {
         this.title = title
@@ -61,9 +58,6 @@ public class Window {
         this.contextMenu = None<ContextMenu>
         this.mainWidget = None<Widget>
         this.onFileDrop = None<(ArrayList<String>) -> Unit>
-        this.needsRenderFlag = true
-        this.lastRenderW = -1
-        this.lastRenderH = -1
 
         ffi_gdipInit()
 
@@ -295,7 +289,7 @@ public class Window {
             unsafe { bridge_window_clear_key_event(hwnd) }
 
             match (focusedWidget) {
-                case Some(fw) => requestRender()
+                case Some(_) => ()
                 case None => ()
             }
             processKeyEvent(keyCode, keyEventType, keyChar, ctrlDown, shiftDown, altDown)
@@ -323,7 +317,7 @@ public class Window {
             if (!handled) {
                 for (widget in widgets) {
                     if (widget.hitTest(Float32(wheelX), Float32(wheelY), Float32(width), Float32(height), Float32(curW), Float32(curH))) {
-                        requestRender()
+                        
                         if (widget.handleEvent(wheelEvent)) { break }
                     }
                 }
@@ -486,17 +480,17 @@ public class Window {
                 match (hoveredWidget) {
                     case Some(old) =>
                         old.handleEvent(Event.mouseLeave())
-                        requestRender()
+                        
                         w.handleEvent(Event.mouseEnter())
                         w.handleEvent(Event.mouseMove(x, y))
-                        requestRender()
+                        
                         hoveredWidget = Some<Widget>(w)
                         hoverStartTime = ffi_getTickCount()
                         tooltipVisible = false
                     case None =>
                         w.handleEvent(Event.mouseEnter())
                         w.handleEvent(Event.mouseMove(x, y))
-                        requestRender()
+                        
                         hoveredWidget = Some<Widget>(w)
                         hoverStartTime = ffi_getTickCount()
                         tooltipVisible = false
@@ -505,7 +499,7 @@ public class Window {
                 match (hoveredWidget) {
                     case Some(old) =>
                         old.handleEvent(Event.mouseLeave())
-                        requestRender()
+                        
                         hoveredWidget = None<Widget>
                         tooltipVisible = false
                     case None => ()
@@ -596,7 +590,7 @@ public class Window {
                 }
 
                 leaf.handleEvent(Event.mouseDown(x, y, button))
-                requestRender()
+                
                 pressedWidget = Some<Widget>(leaf)
                 break
             }
@@ -629,7 +623,7 @@ public class Window {
         match (pressedWidget) {
             case Some(w) =>
                 w.handleEvent(Event.mouseUp(x, y, 1))
-                requestRender()
+                
                 pressedWidget = None<Widget>
                 return
             case None => ()
@@ -639,7 +633,7 @@ public class Window {
             case Some(w) =>
                 let leaf = getLeafWidget(w, x, y)
                 leaf.handleEvent(Event.mouseUp(x, y, 1))
-                requestRender()
+                
                 match (leaf) {
                     case slider: Slider =>
                         slider.handleEvent(Event.mouseUp(x, y, 1))
@@ -650,15 +644,11 @@ public class Window {
                     if (widget.hitTest(x, y, Float32(width), Float32(height), currentWidth, currentHeight)) {
                         let leaf = getLeafWidget(widget, x, y)
                         leaf.handleEvent(Event.mouseUp(x, y, 1))
-                        requestRender()
+                        
                         break
                     }
                 }
         }
-    }
-
-    private func requestRender(): Unit {
-        needsRenderFlag = true
     }
 
     private func render(): Unit {
@@ -678,26 +668,11 @@ public class Window {
             unsafe { bridge_stop_animation_timer(hwnd) }
         }
 
-        // skip render in idle state (no events, no animations, no tooltip, no overlay)
-        if (!needsRenderFlag && !stillAnimating && !tooltipVisible) {
-            match (overlayWidget) {
-                case Some(_) => ()
-                case None => return
-            }
-        }
-
-        needsRenderFlag = false
-
         let canvas = Canvas(hwnd)
         canvas.clear(bgColor)
 
         let currentWidth = unsafe { bridge_window_get_width(hwnd) }
         let currentHeight = unsafe { bridge_window_get_height(hwnd) }
-
-        if (currentWidth != lastRenderW || currentHeight != lastRenderH) {
-            lastRenderW = currentWidth
-            lastRenderH = currentHeight
-        }
 
         match (mainWidget) {
             case Some(mw) =>

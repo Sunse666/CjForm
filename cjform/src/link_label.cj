@@ -78,7 +78,7 @@ public class LinkLabel <: Widget {
         match (event.eventType) {
             case EventType.MouseEnter => isHovered = true; true
             case EventType.MouseLeave => isHovered = false; true
-            case EventType.MouseUp => onClick(); true
+            case EventType.MouseDown => onClick(); true
             case _ => false
         }
     }

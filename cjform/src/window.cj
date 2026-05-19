@@ -196,7 +196,12 @@ public class Window {
                 focusManager.register(tb)
                 tb.setParentHwnd(hwnd)
             case te: TextEdit =>
+                focusManager.register(te)
                 te.setParentHwnd(hwnd)
+            case sb: SpinBox =>
+                focusManager.register(sb)
+            case cb: ComboBox =>
+                focusManager.register(cb)
             case vbox: VBox =>
                 for (child in vbox.getChildren()) { registerChildren(child) }
             case hbox: HBox =>
@@ -352,6 +357,7 @@ public class Window {
                 } else {
                     focusManager.focusNext()
                 }
+                syncFocusedWidget()
             } else {
                 match (focusedWidget) {
                     case Some(w) =>
@@ -383,6 +389,20 @@ public class Window {
                     case None => ()
                 }
             }
+        }
+    }
+
+    private func syncFocusedWidget(): Unit {
+        match (focusManager.getFocused()) {
+            case Some(f) =>
+                match (f) {
+                    case tb: TextBox => focusedWidget = Some<Widget>(tb)
+                    case te: TextEdit => focusedWidget = Some<Widget>(te)
+                    case sb: SpinBox => focusedWidget = Some<Widget>(sb)
+                    case cb: ComboBox => focusedWidget = Some<Widget>(cb)
+                    case _ => ()
+                }
+            case None => focusedWidget = None<Widget>
         }
     }
 
@@ -537,24 +557,8 @@ public class Window {
                 let leaf = getLeafWidget(widget, x, y)
 
                 match (leaf) {
-                    case tb: TextBox =>
-                        focusManager.setFocus(tb)
-                        focusedWidget = Some<Widget>(leaf)
-                    case te: TextEdit =>
-                        focusManager.clearFocus()
-                        match (focusedWidget) {
-                            case Some(fw) => fw.handleEvent(Event.focusLost())
-                            case None => ()
-                        }
-                        te.handleEvent(Event.focusGain())
-                        focusedWidget = Some<Widget>(leaf)
-                    case sb: SpinBox =>
-                        focusManager.clearFocus()
-                        match (focusedWidget) {
-                            case Some(fw) => fw.handleEvent(Event.focusLost())
-                            case None => ()
-                        }
-                        sb.handleEvent(Event.focusGain())
+                    case f: Focusable =>
+                        focusManager.setFocus(f)
                         focusedWidget = Some<Widget>(leaf)
                     case slider: Slider =>
                         focusManager.clearFocus()

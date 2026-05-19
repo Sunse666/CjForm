@@ -63,7 +63,7 @@ public struct TextBoxStyle {
     public func updateAnimation(tickCount: Int64): Bool { false }
 }
 
-public class TextBox <: Widget {
+public class TextBox <: Widget & Focusable {
     private var position: Position
     private var width: Float32
     private var height: Float32
@@ -83,6 +83,7 @@ public class TextBox <: Widget {
     private var isHovered: Bool
     private var isSelecting: Bool
     private var tabIndex: Int32
+    private var focusId: Int64
     private var onTextChanged: Option<(String) -> Unit>
     private var layoutFrame: Option<LayoutFrame>
     private var caretVisible: Bool
@@ -109,6 +110,7 @@ public class TextBox <: Widget {
         this.isHovered = false
         this.isSelecting = false
         this.tabIndex = 0
+        this.focusId = nextFocusId()
         this.onTextChanged = None<(String) -> Unit>
         this.layoutFrame = None
         this.caretVisible = true
@@ -184,6 +186,10 @@ public class TextBox <: Widget {
             }
         }
     }
+
+    public func focus(): Unit { setFocus(true) }
+    public func blur(): Unit { setFocus(false) }
+    public func getFocusId(): Int64 { focusId }
 
     public func getTabIndex(): Int32 {
         tabIndex

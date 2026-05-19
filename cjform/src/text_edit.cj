@@ -69,7 +69,7 @@ class VisualLine {
     }
 }
 
-public class TextEdit <: Widget {
+public class TextEdit <: Widget & Focusable {
     private var lines: ArrayList<String>
     private var cursorRow: Int64
     private var cursorCol: Int64
@@ -99,6 +99,7 @@ public class TextEdit <: Widget {
     private var lastWheelTime: Int64
     private var layoutFrame: Option<LayoutFrame>
     private var parentHwnd: Option<CPointer<Byte>>
+    private var focusId: Int64
     private var viewportH: Float32
     private var undoStack: ArrayList<UndoEntry>
     private var redoStack: ArrayList<UndoEntry>
@@ -137,6 +138,7 @@ public class TextEdit <: Widget {
         this.lastWheelTime = 0
         this.layoutFrame = None
         this.parentHwnd = None<CPointer<Byte>>
+        this.focusId = nextFocusId()
         this.viewportH = 0.0
         this.undoStack = ArrayList<UndoEntry>()
         this.redoStack = ArrayList<UndoEntry>()
@@ -154,6 +156,11 @@ public class TextEdit <: Widget {
     }
 
     public func setParentHwnd(hwnd: CPointer<Byte>): Unit { this.parentHwnd = Some(hwnd) }
+
+    public func focus(): Unit { isFocused = true; caretVisible = true; lastBlinkTime = 0 }
+    public func blur(): Unit { isFocused = false }
+    public func hasFocus(): Bool { isFocused }
+    public func getFocusId(): Int64 { focusId }
     public func setOnTextChanged(callback: (String) -> Unit): Unit { this.onTextChanged = Some(callback) }
     public func setWordWrap(wrap: Bool): Unit { this.wordWrap = wrap }
 

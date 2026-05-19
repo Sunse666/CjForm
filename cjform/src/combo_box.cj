@@ -75,11 +75,13 @@ public struct ComboBoxStyle {
     public static func fromTheme(): ComboBoxStyle { ComboBoxStyle(true) }
 }
 
-public class ComboBox <: Widget {
+public class ComboBox <: Widget & Focusable {
     private var items: ArrayList<String>
     private var selectedIndex: Int32
     private var isOpen: Bool
     private var isHovered: Bool
+    private var isFocused: Bool
+    private var focusId: Int64
     private var hoveredItemIndex: Int32
     private var buttonHeight: Float32
     private var dropDownMaxHeight: Float32
@@ -94,6 +96,8 @@ public class ComboBox <: Widget {
         this.selectedIndex = -1
         this.isOpen = false
         this.isHovered = false
+        this.isFocused = false
+        this.focusId = nextFocusId()
         this.hoveredItemIndex = -1
         this.buttonHeight = 30.0
         this.dropDownMaxHeight = 200.0
@@ -109,6 +113,8 @@ public class ComboBox <: Widget {
         this.selectedIndex = -1
         this.isOpen = false
         this.isHovered = false
+        this.isFocused = false
+        this.focusId = nextFocusId()
         this.hoveredItemIndex = -1
         this.buttonHeight = 30.0
         this.dropDownMaxHeight = 200.0
@@ -135,6 +141,11 @@ public class ComboBox <: Widget {
     public func getSelectedIndex(): Int32 { selectedIndex }
 
     public func setParentWindow(win: Window): Unit { this.parentWindow = Some(win) }
+
+    public func focus(): Unit { isFocused = true }
+    public func blur(): Unit { isFocused = false; if (isOpen) { closeDropdown() } }
+    public func hasFocus(): Bool { isFocused }
+    public func getFocusId(): Int64 { focusId }
 
     private func getSelectedLabel(): String {
         if (selectedIndex >= 0 && selectedIndex < Int32(items.size)) {

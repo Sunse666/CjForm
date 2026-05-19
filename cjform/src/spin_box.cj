@@ -66,7 +66,7 @@ public struct SpinBoxStyle {
     public static func fromTheme(): SpinBoxStyle { SpinBoxStyle(true) }
 }
 
-public class SpinBox <: Widget {
+public class SpinBox <: Widget & Focusable {
     private var style: SpinBoxStyle
     private var value: Float32
     private var minValue: Float32
@@ -75,6 +75,7 @@ public class SpinBox <: Widget {
     private var isIntMode: Bool
     private var isHovered: Bool
     private var isFocused: Bool
+    private var focusId: Int64
     private var hoverZone: Int32
     private var pressedZone: Int32
     private var repeatTimer: Int64
@@ -95,6 +96,7 @@ public class SpinBox <: Widget {
         this.isIntMode = isInt
         this.isHovered = false
         this.isFocused = false
+        this.focusId = nextFocusId()
         this.hoverZone = 0
         this.pressedZone = 0
         this.repeatTimer = 0
@@ -116,6 +118,7 @@ public class SpinBox <: Widget {
         this.isIntMode = isInt
         this.isHovered = false
         this.isFocused = false
+        this.focusId = nextFocusId()
         this.hoverZone = 0
         this.pressedZone = 0
         this.repeatTimer = 0
@@ -134,6 +137,11 @@ public class SpinBox <: Widget {
     }
 
     public func setOnValueChanged(cb: (Float32) -> Unit): Unit { this.onValueChanged = Some(cb) }
+
+    public func focus(): Unit { isFocused = true }
+    public func blur(): Unit { isFocused = false; if (isEditing) { commitEditing() } }
+    public func hasFocus(): Bool { isFocused }
+    public func getFocusId(): Int64 { focusId }
     public func getValue(): Float32 { value }
 
     private func formatValue(): String {

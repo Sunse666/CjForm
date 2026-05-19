@@ -55,7 +55,7 @@ public class Slider <: Widget {
     private var currentValue: Float32
     private var isHovered: Bool
     private var isDragging: Bool
-    private var onValueChanged: Option<(Float32) -> Unit>
+    private var _onValueChanged: Option<(Float32) -> Unit>
     private var layoutFrame: Option<LayoutFrame>
 
     public init(position: Position, width: Float32, sizeScale: SizeScale, style: SliderStyle, min: Float32, max: Float32, value: Float32) {
@@ -68,7 +68,7 @@ public class Slider <: Widget {
         this.currentValue = value
         this.isHovered = false
         this.isDragging = false
-        this.onValueChanged = None<(Float32) -> Unit>
+        this._onValueChanged = None<(Float32) -> Unit>
         this.layoutFrame = None
     }
 
@@ -79,8 +79,9 @@ public class Slider <: Widget {
         Slider(position, width, sc, style, min, max, value)
     }
 
+    public func onValueChanged(cb: (Float32) -> Unit): Slider { this._onValueChanged = Some(cb); this }
     public func setOnValueChanged(callback: (Float32) -> Unit): Unit {
-        this.onValueChanged = Some<(Float32) -> Unit>(callback)
+        this._onValueChanged = Some<(Float32) -> Unit>(callback)
     }
 
     public func getValue(): Float32 {
@@ -226,7 +227,7 @@ public class Slider <: Widget {
     }
 
     private func notifyValueChanged(): Unit {
-        match (onValueChanged) {
+        match (_onValueChanged) {
             case Some(callback) => callback(currentValue)
             case None => ()
         }

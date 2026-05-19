@@ -86,7 +86,7 @@ public class ComboBox <: Widget & Focusable {
     private var buttonHeight: Float32
     private var dropDownMaxHeight: Float32
     private var itemHeight: Float32
-    private var onSelectionChanged: Option<(Int32, String) -> Unit>
+    private var _onSelectionChanged: Option<(Int32, String) -> Unit>
     private var layoutFrame: Option<LayoutFrame>
     private var parentWindow: Option<Window>
     private var style: ComboBoxStyle
@@ -102,7 +102,7 @@ public class ComboBox <: Widget & Focusable {
         this.buttonHeight = 30.0
         this.dropDownMaxHeight = 200.0
         this.itemHeight = 26.0
-        this.onSelectionChanged = None<(Int32, String) -> Unit>
+        this._onSelectionChanged = None<(Int32, String) -> Unit>
         this.layoutFrame = None
         this.parentWindow = None<Window>
         this.style = ComboBoxStyle.fromTheme()
@@ -119,7 +119,7 @@ public class ComboBox <: Widget & Focusable {
         this.buttonHeight = 30.0
         this.dropDownMaxHeight = 200.0
         this.itemHeight = 26.0
-        this.onSelectionChanged = None<(Int32, String) -> Unit>
+        this._onSelectionChanged = None<(Int32, String) -> Unit>
         this.layoutFrame = None
         this.parentWindow = None<Window>
         this.style = style
@@ -134,8 +134,9 @@ public class ComboBox <: Widget & Focusable {
         this.selectedIndex = -1
     }
 
+    public func onSelectionChanged(cb: (Int32, String) -> Unit): ComboBox { this._onSelectionChanged = Some(cb); this }
     public func setOnSelectionChanged(callback: (Int32, String) -> Unit): Unit {
-        this.onSelectionChanged = Some<(Int32, String) -> Unit>(callback)
+        this._onSelectionChanged = Some<(Int32, String) -> Unit>(callback)
     }
 
     public func getSelectedIndex(): Int32 { selectedIndex }
@@ -229,7 +230,7 @@ public class ComboBox <: Widget & Focusable {
         let idx = Int32(relY / itemHeight)
         if (idx >= 0 && idx < Int32(items.size)) {
             selectedIndex = idx
-            match (onSelectionChanged) {
+            match (_onSelectionChanged) {
                 case Some(cb) => cb(selectedIndex, items[Int64(selectedIndex)])
                 case None => ()
             }

@@ -6,7 +6,7 @@ public class MenuItem {
     public let text: String
     public let shortcut: String
     public let isEnabled: Bool
-    public let onClick: () -> Unit
+    public var onClick: () -> Unit
     public let children: ArrayList<MenuItem>
 
     public init(text: String, onClick: () -> Unit, shortcut: String, isEnabled: Bool) {
@@ -29,6 +29,8 @@ public class MenuItem {
         children.add(item)
         this
     }
+
+    public func setOnClick(cb: () -> Unit): MenuItem { this.onClick = cb; this }
 
     public static func separator(): MenuItem {
         MenuItem("", { => () }, "", false)

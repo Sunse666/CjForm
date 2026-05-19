@@ -84,7 +84,7 @@ public class TextBox <: Widget & Focusable {
     private var isSelecting: Bool
     private var tabIndex: Int32
     private var focusId: Int64
-    private var onTextChanged: Option<(String) -> Unit>
+    private var _onTextChanged: Option<(String) -> Unit>
     private var layoutFrame: Option<LayoutFrame>
     private var caretVisible: Bool
     private var awakeCaret: Bool
@@ -111,7 +111,7 @@ public class TextBox <: Widget & Focusable {
         this.isSelecting = false
         this.tabIndex = 0
         this.focusId = nextFocusId()
-        this.onTextChanged = None<(String) -> Unit>
+        this._onTextChanged = None<(String) -> Unit>
         this.layoutFrame = None
         this.caretVisible = true
         this.awakeCaret = false
@@ -139,8 +139,9 @@ public class TextBox <: Widget & Focusable {
         this.parentHwnd = Some<CPointer<Byte>>(hwnd)
     }
 
+    public func onTextChanged(cb: (String) -> Unit): TextBox { this._onTextChanged = Some(cb); this }
     public func setOnTextChanged(callback: (String) -> Unit): Unit {
-        this.onTextChanged = Some<(String) -> Unit>(callback)
+        this._onTextChanged = Some<(String) -> Unit>(callback)
     }
 
     public func setTabIndex(index: Int32): Unit {
@@ -748,7 +749,7 @@ public class TextBox <: Widget & Focusable {
     }
 
     private func notifyTextChanged(): Unit {
-        match (onTextChanged) {
+        match (_onTextChanged) {
             case Some(callback) => callback(text)
             case None => ()
         }

@@ -5,12 +5,12 @@ import std.collection.*
 public class RadioGroup {
     private var buttons: ArrayList<RadioButton>
     private var selectedIndex: Int32
-    private var onSelectionChanged: Option<(Int32) -> Unit>
+    private var _onSelectionChanged: Option<(Int32) -> Unit>
 
     public init() {
         this.buttons = ArrayList<RadioButton>()
         this.selectedIndex = -1
-        this.onSelectionChanged = None<(Int32) -> Unit>
+        this._onSelectionChanged = None<(Int32) -> Unit>
     }
 
     public func add(button: RadioButton): Unit {
@@ -37,12 +37,13 @@ public class RadioGroup {
         selectedIndex
     }
 
+    public func onSelectionChanged(cb: (Int32) -> Unit): RadioGroup { this._onSelectionChanged = Some(cb); this }
     public func setOnSelectionChanged(callback: (Int32) -> Unit): Unit {
-        this.onSelectionChanged = Some<(Int32) -> Unit>(callback)
+        this._onSelectionChanged = Some<(Int32) -> Unit>(callback)
     }
 
     private func notifySelectionChanged(): Unit {
-        match (onSelectionChanged) {
+        match (_onSelectionChanged) {
             case Some(callback) => callback(selectedIndex)
             case None => ()
         }
@@ -112,6 +113,7 @@ public class RadioButton <: Widget {
     private var index: Int32
     private var layoutFrame: Option<LayoutFrame>
     private var measuredTextWidth: Float32
+    private var onClickCallback: Option<() -> Unit>
 
     public init(text: String, position: Position, fontFamily: String, fontSize: Float32, sizeScale: SizeScale, style: RadioButtonStyle) {
         this.text = text
@@ -126,6 +128,12 @@ public class RadioButton <: Widget {
         this.index = -1
         this.layoutFrame = None
         this.measuredTextWidth = 0.0
+        this.onClickCallback = None<() -> Unit>
+    }
+
+    public func onClick(cb: () -> Unit): RadioButton {
+        this.onClickCallback = Some(cb)
+        this
     }
 
     public static func styled(styleName: String, text: String, position: Position,
@@ -255,6 +263,10 @@ public class RadioButton <: Widget {
                         case Some(g) => g.select(index)
                         case None => isSelected = true
                     }
+                }
+                match (onClickCallback) {
+                    case Some(cb) => cb()
+                    case None => ()
                 }
                 true
             case _ => false

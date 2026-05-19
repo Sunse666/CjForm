@@ -81,7 +81,7 @@ public class SpinBox <: Widget & Focusable {
     private var repeatTimer: Int64
     private var repeatInterval: Int64
     private var layoutFrame: Option<LayoutFrame>
-    private var onValueChanged: Option<(Float32) -> Unit>
+    private var _onValueChanged: Option<(Float32) -> Unit>
     private var isEditing: Bool
     private var editBuffer: String
     private var caretVisible: Bool
@@ -102,7 +102,7 @@ public class SpinBox <: Widget & Focusable {
         this.repeatTimer = 0
         this.repeatInterval = 80
         this.layoutFrame = None
-        this.onValueChanged = None<(Float32) -> Unit>
+        this._onValueChanged = None<(Float32) -> Unit>
         this.isEditing = false
         this.editBuffer = ""
         this.caretVisible = true
@@ -124,7 +124,7 @@ public class SpinBox <: Widget & Focusable {
         this.repeatTimer = 0
         this.repeatInterval = 80
         this.layoutFrame = None
-        this.onValueChanged = None<(Float32) -> Unit>
+        this._onValueChanged = None<(Float32) -> Unit>
         this.isEditing = false
         this.editBuffer = ""
         this.caretVisible = true
@@ -136,7 +136,8 @@ public class SpinBox <: Widget & Focusable {
         SpinBox(minV, maxV, initialV, step, isInt, SpinBoxStyle.fromTheme())
     }
 
-    public func setOnValueChanged(cb: (Float32) -> Unit): Unit { this.onValueChanged = Some(cb) }
+    public func onValueChanged(cb: (Float32) -> Unit): SpinBox { this._onValueChanged = Some(cb); this }
+    public func setOnValueChanged(cb: (Float32) -> Unit): Unit { this._onValueChanged = Some(cb) }
 
     public func focus(): Unit { isFocused = true }
     public func blur(): Unit { isFocused = false; if (isEditing) { commitEditing() } }
@@ -435,7 +436,7 @@ public class SpinBox <: Widget & Focusable {
     }
 
     private func notifyChanged(): Unit {
-        match (onValueChanged) { case Some(cb) => cb(value); case None => () }
+        match (_onValueChanged) { case Some(cb) => cb(value); case None => () }
     }
 
     private func getFrame(): (Float32, Float32, Float32, Float32) {

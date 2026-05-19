@@ -37,6 +37,7 @@ public class ToggleSwitch <: Widget {
     private var style: ToggleSwitchStyle
     private var thumbAnim: AnimationState
     private var onCheckedChanged: Option<(Bool) -> Unit>
+    private var onClickCallback: Option<() -> Unit>
     private var layoutFrame: Option<LayoutFrame>
 
     public init(checked: Bool, style: ToggleSwitchStyle) {
@@ -45,9 +46,18 @@ public class ToggleSwitch <: Widget {
         this.style = style
         this.thumbAnim = AnimationState()
         this.onCheckedChanged = None<(Bool) -> Unit>
+        this.onClickCallback = None<() -> Unit>
         this.layoutFrame = None
     }
 
+    public func onClick(cb: () -> Unit): ToggleSwitch {
+        this.onClickCallback = Some(cb)
+        this
+    }
+    public func onToggle(cb: (Bool) -> Unit): ToggleSwitch {
+        this.onCheckedChanged = Some(cb)
+        this
+    }
     public func setOnCheckedChanged(callback: (Bool) -> Unit): Unit {
         this.onCheckedChanged = Some<(Bool) -> Unit>(callback)
     }
@@ -118,6 +128,10 @@ public class ToggleSwitch <: Widget {
                     thumbAnim.start(1.0, 0.0, 180, Easing.EaseOut)
                 }
                 notifyChanged()
+                match (onClickCallback) {
+                    case Some(cb) => cb()
+                    case None => ()
+                }
                 true
             case _ => false
         }

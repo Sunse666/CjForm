@@ -104,7 +104,7 @@ public class TextEdit <: Widget & Focusable {
     private var undoStack: ArrayList<UndoEntry>
     private var redoStack: ArrayList<UndoEntry>
     private var groupingDelete: Bool
-    private var onTextChanged: Option<(String) -> Unit>
+    private var _onTextChanged: Option<(String) -> Unit>
     private var wrapCache: ArrayList<Int64>
 
     public init(fontFamily: String, fontSize: Float32, style: TextEditStyle) {
@@ -143,7 +143,7 @@ public class TextEdit <: Widget & Focusable {
         this.undoStack = ArrayList<UndoEntry>()
         this.redoStack = ArrayList<UndoEntry>()
         this.groupingDelete = false
-        this.onTextChanged = None<(String) -> Unit>
+        this._onTextChanged = None<(String) -> Unit>
         this.wrapCache = ArrayList<Int64>()
     }
 
@@ -161,7 +161,8 @@ public class TextEdit <: Widget & Focusable {
     public func blur(): Unit { isFocused = false }
     public func hasFocus(): Bool { isFocused }
     public func getFocusId(): Int64 { focusId }
-    public func setOnTextChanged(callback: (String) -> Unit): Unit { this.onTextChanged = Some(callback) }
+    public func onTextChanged(cb: (String) -> Unit): TextEdit { this._onTextChanged = Some(cb); this }
+    public func setOnTextChanged(callback: (String) -> Unit): Unit { this._onTextChanged = Some(callback) }
     public func setWordWrap(wrap: Bool): Unit { this.wordWrap = wrap }
 
     public func getText(): String {
@@ -986,7 +987,7 @@ public class TextEdit <: Widget & Focusable {
     }
 
     private func notifyChanged(): Unit {
-        match (onTextChanged) {
+        match (_onTextChanged) {
             case Some(cb) => cb(getText())
             case None => ()
         }

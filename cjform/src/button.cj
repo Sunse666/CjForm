@@ -12,7 +12,7 @@ public class Button <: Widget {
     private var style: ButtonStyle
     private var isHovered: Bool
     private var isPressed: Bool
-    private var onClick: () -> Unit
+    private var _onClick: () -> Unit
     private var layoutFrame: Option<LayoutFrame>
     private var hoverAnim: AnimationState
     private var pressAnim: AnimationState
@@ -29,7 +29,7 @@ public class Button <: Widget {
         this.style = style
         this.isHovered = false
         this.isPressed = false
-        this.onClick = onClick
+        this._onClick = onClick
         this.layoutFrame = None
         this.hoverAnim = AnimationState()
         this.pressAnim = AnimationState()
@@ -234,7 +234,7 @@ public class Button <: Widget {
                 if (isPressed) {
                     isPressed = false
                     pressAnim.start(1.0, 0.0, 80, Easing.EaseOut)
-                    onClick()
+                    _onClick()
                 }
                 true
             case _ => false
@@ -249,6 +249,7 @@ public class Button <: Widget {
         text
     }
 
+    public func onClick(cb: () -> Unit): Button { this._onClick = cb; this }
     public func setText(text: String): Unit {
         this.text = text
     }

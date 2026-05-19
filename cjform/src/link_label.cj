@@ -9,7 +9,7 @@ public class LinkLabel <: Widget {
     private var anchor: Anchor
     private var isHovered: Bool
     private var layoutFrame: Option<LayoutFrame>
-    private var onClick: () -> Unit
+    private var _onClick: () -> Unit
 
     public init(text: String, position: Position, fontFamily: String, fontSize: Float32,
         sizeScale: SizeScale, anchor: Anchor, onClick: () -> Unit) {
@@ -21,7 +21,7 @@ public class LinkLabel <: Widget {
         this.anchor = anchor
         this.isHovered = false
         this.layoutFrame = None
-        this.onClick = onClick
+        this._onClick = onClick
     }
 
     public static func styled(styleName: String, text: String, position: Position,
@@ -78,7 +78,7 @@ public class LinkLabel <: Widget {
         match (event.eventType) {
             case EventType.MouseEnter => isHovered = true; true
             case EventType.MouseLeave => isHovered = false; true
-            case EventType.MouseDown => onClick(); true
+            case EventType.MouseDown => _onClick(); true
             case _ => false
         }
     }
@@ -92,6 +92,7 @@ public class LinkLabel <: Widget {
     public func updateAnimation(tickCount: Int64): Bool { false }
     public func findLeafAt(x: Float32, y: Float32): Widget { this }
 
+    public func onClick(cb: () -> Unit): LinkLabel { this._onClick = cb; this }
     public func setText(t: String): Unit { this.text = t }
     public func getText(): String { text }
 }

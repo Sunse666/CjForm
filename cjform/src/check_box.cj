@@ -63,6 +63,7 @@ public class CheckBox <: Widget {
     private var isChecked: Bool
     private var isHovered: Bool
     private var onCheckedChanged: Option<(Bool) -> Unit>
+    private var onClickCallback: Option<() -> Unit>
     private var layoutFrame: Option<LayoutFrame>
     private var measuredTextWidth: Float32
 
@@ -76,6 +77,7 @@ public class CheckBox <: Widget {
         this.isChecked = checked
         this.isHovered = false
         this.onCheckedChanged = None<(Bool) -> Unit>
+        this.onClickCallback = None<() -> Unit>
         this.layoutFrame = None
         this.measuredTextWidth = 0.0
     }
@@ -89,6 +91,14 @@ public class CheckBox <: Widget {
         CheckBox(text, position, ff, fs, sc, style, checked)
     }
 
+    public func onClick(cb: () -> Unit): CheckBox {
+        this.onClickCallback = Some(cb)
+        this
+    }
+    public func onToggle(cb: (Bool) -> Unit): CheckBox {
+        this.onCheckedChanged = Some(cb)
+        this
+    }
     public func setOnCheckedChanged(callback: (Bool) -> Unit): Unit {
         this.onCheckedChanged = Some<(Bool) -> Unit>(callback)
     }
@@ -217,6 +227,10 @@ public class CheckBox <: Widget {
             case EventType.MouseUp =>
                 isChecked = !isChecked
                 notifyCheckedChanged()
+                match (onClickCallback) {
+                    case Some(cb) => cb()
+                    case None => ()
+                }
                 true
             case _ => false
         }

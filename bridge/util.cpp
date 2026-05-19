@@ -45,3 +45,7 @@ wchar_t* build_filter(const char* filter) {
     wf[len] = L'\0'; wf[len + 1] = L'\0';
     return wf;
 }
+
+__declspec(dllexport) bool bridge_is_null_ptr(void* ptr) {
+    return ptr == NULL;
+}

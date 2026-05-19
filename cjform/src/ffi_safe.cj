@@ -52,6 +52,9 @@ public func ffi_editCreate(parent: CPointer<Byte>, x: Int32, y: Int32, w: Int32,
     let cstr = unsafe { LibC.mallocCString(placeholder) }
     let hwnd = unsafe { bridge_edit_create(parent, x, y, w, h, cstr) }
     unsafe { LibC.free(cstr) }
+    if (ffi_isNullPtr(hwnd)) {
+        println("[CJForm] Warning: failed to create edit control")
+    }
     hwnd
 }
 
@@ -75,6 +78,9 @@ public func ffi_loadImage(filePath: String): CPointer<Byte> {
     let cstr = unsafe { LibC.mallocCString(filePath) }
     let bmp = unsafe { bridge_gdip_load_image(cstr) }
     unsafe { LibC.free(cstr) }
+    if (ffi_isNullPtr(bmp)) {
+        println("[CJForm] Warning: failed to load image '${filePath}'")
+    }
     bmp
 }
 
@@ -121,6 +127,9 @@ public func ffi_windowCreate(title: String, width: Int32, height: Int32, resizab
     let tc = unsafe { LibC.mallocCString(title) }
     let hwnd = unsafe { bridge_window_create(tc, width, height, resizable, alwaysOnTop, noTitleBar) }
     unsafe { LibC.free(tc) }
+    if (ffi_isNullPtr(hwnd)) {
+        println("[CJForm] Error: failed to create window '${title}'")
+    }
     hwnd
 }
 
@@ -152,4 +161,21 @@ public func ffi_measureTextRange(hwnd: CPointer<Byte>, text: String, charCount: 
     let w = unsafe { bridge_gdip_measure_text_range(hwnd, tc, charCount, fc, fontSize) }
     unsafe { LibC.free(tc); LibC.free(fc) }
     w
+}
+
+// --- Pointer utilities ---
+
+public func ffi_isNullPtr(ptr: CPointer<Byte>): Bool {
+    unsafe { bridge_is_null_ptr(ptr) }
+}
+
+// --- GDI+ ---
+
+public func ffi_gdipInit(): Bool {
+    let token = unsafe { bridge_gdip_init() }
+    let ok = !ffi_isNullPtr(token)
+    if (!ok) {
+        println("[CJForm] Error: GDI+ initialization failed")
+    }
+    ok
 }

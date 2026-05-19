@@ -144,3 +144,5 @@ foreign func bridge_config_write_string(section: CString, key: CString, value: C
 foreign func bridge_config_read_string(section: CString, key: CString, defaultVal: CString, buffer: CPointer<Byte>, bufferSize: Int32): Int32
 foreign func bridge_config_write_int(section: CString, key: CString, value: Int32): Unit
 foreign func bridge_config_read_int(section: CString, key: CString, defaultVal: Int32): Int32
+
+foreign func bridge_is_null_ptr(ptr: CPointer<Byte>): Bool

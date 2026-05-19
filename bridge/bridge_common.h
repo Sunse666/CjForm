@@ -169,6 +169,8 @@ __declspec(dllexport) int bridge_config_read_string(const char* section, const c
 __declspec(dllexport) void bridge_config_write_int(const char* section, const char* key, int value);
 __declspec(dllexport) int bridge_config_read_int(const char* section, const char* key, int defaultVal);
 
+__declspec(dllexport) bool bridge_is_null_ptr(void* ptr);
+
 }
 
 #endif

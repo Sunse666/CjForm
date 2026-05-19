@@ -59,9 +59,11 @@ public class Window {
         this.mainWidget = None<Widget>
         this.onFileDrop = None<(ArrayList<String>) -> Unit>
 
-        unsafe { bridge_gdip_init() }
+        ffi_gdipInit()
 
         this.hwnd = ffi_windowCreate(title, width, height, true, false, false)
+
+        if (ffi_isNullPtr(hwnd)) { return }
 
         unsafe { bridge_window_set_dark_mode(hwnd, Theme.getCurrent().isDark) }
 
@@ -225,6 +227,11 @@ public class Window {
     }
 
     public func run(): Int32 {
+        if (ffi_isNullPtr(hwnd)) {
+            println("[CJForm] Error: cannot run — window handle is null")
+            return 1
+        }
+
         render()
 
         while (true) {

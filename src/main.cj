@@ -60,6 +60,7 @@ main(): Int64 {
     tabView.addTab("New Controls", createNewControlsTab(win))
     tabView.addTab("Scroll Area", createScrollTab())
     tabView.addTab("v1.2 Features", createV12FeaturesTab(win))
+    tabView.addTab("v1.3 Controls", createV13ControlsTab(win))
     tabView.addTab("About", createAboutTab())
     tabView.setLayoutFrame(LayoutFrame(0.0, 70.0, 1050.0, 650.0))
 
@@ -528,6 +529,48 @@ func createV12FeaturesTab(win: Window): Widget {
             c.textTertiary, "Microsoft YaHei", 12.0, SizeScale.fixed(), Anchor.CenterLeft),
             LayoutParams.fixed(900.0, 20.0))
     }
+
+    scroll.setContent(vbox)
+    scroll
+}
+
+func createV13ControlsTab(win: Window): Widget {
+    let scroll = ScrollArea()
+    let vbox = VBox(12.0, 20.0)
+    let c = Theme.colors()
+
+    let sec1 = Label.styled("section-title", "Toolbar", Position.abs(0.0, 0.0), c.accent)
+    vbox.add(sec1, LayoutParams.fixed(900.0, 24.0))
+    let toolbar = Toolbar()
+    toolbar.addItem("New", { => println("Toolbar: New") })
+    toolbar.addItem("Open", { => println("Toolbar: Open") })
+    toolbar.addItem("Save", { => println("Toolbar: Save") })
+    toolbar.addItem("Refresh", { => println("Toolbar: Refresh") })
+    vbox.add(toolbar, LayoutParams.fixed(900.0, 32.0))
+
+    vbox.add(Separator(true, SeparatorStyle.fromTheme()), LayoutParams.fixed(900.0, 10.0))
+
+    let sec2 = Label.styled("section-title", "Link Labels", Position.abs(0.0, 0.0), c.accent)
+    vbox.add(sec2, LayoutParams.fixed(900.0, 24.0))
+    let linkRow = HBox(16.0, 0.0)
+    linkRow.add(LinkLabel.styled("btn", "Documentation", Position.abs(0.0, 0.0),
+        { => println("Link: Documentation clicked") }), LayoutParams.fixed(140.0, 22.0))
+    linkRow.add(LinkLabel.styled("btn", "GitHub Repository", Position.abs(0.0, 0.0),
+        { => println("Link: GitHub clicked") }), LayoutParams.fixed(160.0, 22.0))
+    linkRow.add(LinkLabel.styled("btn", "Report Issue", Position.abs(0.0, 0.0),
+        { => println("Link: Report Issue clicked") }), LayoutParams.fixed(120.0, 22.0))
+    vbox.add(linkRow, LayoutParams.fixed(900.0, 28.0))
+
+    vbox.add(Separator(true, SeparatorStyle.fromTheme()), LayoutParams.fixed(900.0, 10.0))
+
+    let sec3 = Label.styled("section-title", "StatusBar", Position.abs(0.0, 0.0), c.accent)
+    vbox.add(sec3, LayoutParams.fixed(900.0, 24.0))
+    let statusBar = StatusBar()
+    statusBar.setText("Ready  |  CJForm v1.3  |  Cangjie Windows UI Library")
+    vbox.add(statusBar, LayoutParams.fixed(900.0, 24.0))
+    let statusLabel = Label.styled("body-label", "Click toolbar buttons and links above — output goes to console",
+        Position.abs(0.0, 0.0), c.textTertiary)
+    vbox.add(statusLabel, LayoutParams.fixed(900.0, 20.0))
 
     scroll.setContent(vbox)
     scroll

@@ -127,6 +127,7 @@ public class TabView <: Widget {
     }
 
     public func findLeafAt(x: Float32, y: Float32): Widget {
+        ensureContentLayout()
         if (activeIndex >= 0 && activeIndex < Int32(tabs.size)) {
             let content = tabs[Int64(activeIndex)].content
             if (content.hitTest(x, y, 0.0, 0.0, 0.0, 0.0)) {
@@ -195,6 +196,20 @@ public class TabView <: Widget {
         match (layoutFrame) {
             case Some(f) => x >= f.x && x <= f.x + f.width && y >= f.y && y <= f.y + f.height
             case None => x >= 0.0 && x <= Float32(currentWidth) && y >= 0.0 && y <= Float32(currentHeight)
+        }
+    }
+
+    private func ensureContentLayout(): Unit {
+        if (activeIndex >= 0 && activeIndex < Int32(tabs.size)) {
+            match (layoutFrame) {
+                case Some(f) =>
+                    let contentY = f.y + getTabBarHeight()
+                    let contentH = f.height - getTabBarHeight()
+                    if (contentH > 0.0) {
+                        tabs[Int64(activeIndex)].content.setLayoutFrame(LayoutFrame(f.x, contentY, f.width, contentH))
+                    }
+                case None => ()
+            }
         }
     }
 

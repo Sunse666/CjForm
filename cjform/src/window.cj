@@ -663,6 +663,62 @@ public class Window {
         dirtyWidgets.add(widget)
     }
 
+    private func isContainer(w: Widget): Bool {
+        match (w) {
+            case _: VBox => true
+            case _: HBox => true
+            case _: ScrollArea => true
+            case _: TabView => true
+            case _: GroupBox => true
+            case _: SplitPane => true
+            case _ => false
+        }
+    }
+
+    private func needsPaintPartial(w: Widget): Bool {
+        isContainer(w) || isTopLevelDirty(w)
+    }
+
+    private func isTopLevelDirty(w: Widget): Bool {
+        // check if this top-level widget or any of its descendants was dirtied
+        for (d in dirtyWidgets) {
+            if (widgetContains(w, d)) { return true }
+        }
+        false
+    }
+
+    private func widgetContains(parent: Widget, target: Widget): Bool {
+        // container types repaint their children; check if target is reachable
+        match (parent) {
+            case vbox: VBox =>
+                for (child in vbox.getChildren()) {
+                    if (widgetContains(child, target)) { return true }
+                }
+                false
+            case hbox: HBox =>
+                for (child in hbox.getChildren()) {
+                    if (widgetContains(child, target)) { return true }
+                }
+                false
+            case scroll: ScrollArea =>
+                match (scroll.getContent()) {
+                    case Some(c) => widgetContains(c, target)
+                    case None => false
+                }
+            case tab: TabView =>
+                for (content in tab.getAllTabContents()) {
+                    if (widgetContains(content, target)) { return true }
+                }
+                false
+            case group: GroupBox =>
+                match (group.getContent()) {
+                    case Some(c) => widgetContains(c, target)
+                    case None => false
+                }
+            case _ => false
+        }
+    }
+
     private func render(): Unit {
         let now = ffi_getTickCount()
         var stillAnimating = false
@@ -712,15 +768,26 @@ public class Window {
             case None => ()
         }
 
+        // skip render entirely in idle state
+        if (!fullRender && dirtyWidgets.size == 0 && !tooltipVisible) {
+            match (overlayWidget) {
+                case Some(_) => ()
+                case None => return
+            }
+        }
+
+        canvas.clear(bgColor)
+
         if (fullRender) {
-            canvas.clear(bgColor)
             for (widget in widgets) {
                 widget.paint(canvas, Float32(width), Float32(height), Float32(currentWidth), Float32(currentHeight))
             }
             fullRender = false
-        } else if (dirtyWidgets.size > 0) {
-            for (widget in dirtyWidgets) {
-                widget.paint(canvas, Float32(width), Float32(height), Float32(currentWidth), Float32(currentHeight))
+        } else {
+            for (widget in widgets) {
+                if (needsPaintPartial(widget)) {
+                    widget.paint(canvas, Float32(width), Float32(height), Float32(currentWidth), Float32(currentHeight))
+                }
             }
         }
 

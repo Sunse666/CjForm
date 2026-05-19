@@ -163,7 +163,12 @@ public class ScrollArea <: Widget {
     public func findLeafAt(x: Float32, y: Float32): Widget {
         match (content) {
             case Some(child) =>
-                child.setLayoutFrame(LayoutFrame(0.0, 0.0, child.getLayoutMinWidth(), child.getLayoutMinHeight()))
+                let cw = child.getLayoutMinWidth()
+                let ch = child.getLayoutMinHeight()
+                match (layoutFrame) {
+                    case Some(f) => child.setLayoutFrame(LayoutFrame(f.x, f.y, cw, ch))
+                    case None => child.setLayoutFrame(LayoutFrame(0.0, 0.0, cw, ch))
+                }
                 if (child.hitTest(x, y, 0.0, 0.0, 0.0, 0.0)) {
                     child.findLeafAt(x, y)
                 } else { this }

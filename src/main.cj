@@ -536,41 +536,99 @@ func createV12FeaturesTab(win: Window): Widget {
 
 func createV13ControlsTab(win: Window): Widget {
     let scroll = ScrollArea()
-    let vbox = VBox(12.0, 20.0)
+    let vbox = VBox(14.0, 20.0)
     let c = Theme.colors()
 
-    let sec1 = Label.styled("section-title", "Toolbar", Position.abs(0.0, 0.0), c.accent)
-    vbox.add(sec1, LayoutParams.fixed(900.0, 24.0))
+    let sec0 = Label.styled("section-title", "Unified Callback API Demo",
+        Position.abs(0.0, 0.0), c.accent)
+    vbox.add(sec0, LayoutParams.fixed(900.0, 24.0))
+    vbox.add(Label("All controls now support .onXxx() { ... } chaining style. Console output below:",
+        Position.abs(0.0, 0.0), c.textTertiary, "Microsoft YaHei", 12.0, SizeScale.fixed(), Anchor.CenterLeft),
+        LayoutParams.fixed(900.0, 18.0))
+
+    // --- Buttons ---
+    let sec1 = Label.styled("section-title", "Button — .onClick()", Position.abs(0.0, 0.0), c.accent)
+    vbox.add(sec1, LayoutParams.fixed(900.0, 22.0))
+    let btnRow = HBox(10.0, 0.0)
+    let primaryBtn = Button.styled("btn", "Primary", Position.abs(0.0, 0.0), 100.0, 32.0,
+        ButtonStyle.fromTheme(), { => () })
+    primaryBtn.onClick() { println("[Button] Primary clicked!") }
+    let outlineBtn = Button.styled("btn", "Outlined", Position.abs(0.0, 0.0), 100.0, 32.0,
+        ButtonStyle.outlined(), { => () })
+    outlineBtn.onClick() { println("[Button] Outlined clicked!") }
+    btnRow.add(primaryBtn, LayoutParams.fixed(100.0, 32.0))
+    btnRow.add(outlineBtn, LayoutParams.fixed(100.0, 32.0))
+    vbox.add(btnRow, LayoutParams.fixed(900.0, 32.0))
+
+    // --- CheckBox + ToggleSwitch ---
+    let sec2 = Label.styled("section-title", "CheckBox / ToggleSwitch — .onToggle()",
+        Position.abs(0.0, 0.0), c.accent)
+    vbox.add(sec2, LayoutParams.fixed(900.0, 22.0))
+    let toggleRow = HBox(20.0, 0.0)
+    let cb = CheckBox.styled("btn", "Enable feature", Position.abs(0.0, 0.0), CheckBoxStyle.fromTheme(), true)
+    cb.onToggle() { checked => let s = if (checked) { "ON" } else { "OFF" }; println("[CheckBox] Feature ${s}") }
+    toggleRow.add(cb, LayoutParams.fixed(180.0, 24.0))
+    let ts = ToggleSwitch(false, ToggleSwitchStyle.fromTheme())
+    ts.onToggle() { on => let s = if (on) { "ON" } else { "OFF" }; println("[ToggleSwitch] ${s}") }
+    toggleRow.add(ts, LayoutParams.fixed(44.0, 24.0))
+    vbox.add(toggleRow, LayoutParams.fixed(900.0, 28.0))
+
+    // --- Slider + SpinBox ---
+    let sec3 = Label.styled("section-title", "Slider / SpinBox — .onValueChanged()",
+        Position.abs(0.0, 0.0), c.accent)
+    vbox.add(sec3, LayoutParams.fixed(900.0, 22.0))
+    let valRow = HBox(16.0, 0.0)
+    let slider = Slider.styled("input", Position.abs(0.0, 0.0), 200.0,
+        SliderStyle.fromTheme(), 0.0, 100.0, 50.0)
+    slider.onValueChanged() { v => println("[Slider] value = ${v}") }
+    valRow.add(slider, LayoutParams.fixed(200.0, 24.0))
+    let spin = SpinBox(0.0, 100.0, 50.0, 5.0, true)
+    spin.onValueChanged() { v => println("[SpinBox] value = ${v}") }
+    valRow.add(spin, LayoutParams.fixed(120.0, 28.0))
+    vbox.add(valRow, LayoutParams.fixed(900.0, 32.0))
+
+    // --- RadioButton ---
+    let sec4 = Label.styled("section-title", "RadioButton — .onClick()",
+        Position.abs(0.0, 0.0), c.accent)
+    vbox.add(sec4, LayoutParams.fixed(900.0, 22.0))
+    let radioGroup = RadioGroup()
+    let rbRow = HBox(20.0, 0.0)
+    let rb1 = RadioButton.styled("btn", "Option A", Position.abs(0.0, 0.0), RadioButtonStyle.fromTheme())
+    rb1.onClick() { println("[RadioButton] Option A selected") }
+    let rb2 = RadioButton.styled("btn", "Option B", Position.abs(0.0, 0.0), RadioButtonStyle.fromTheme())
+    rb2.onClick() { println("[RadioButton] Option B selected") }
+    let rb3 = RadioButton.styled("btn", "Option C", Position.abs(0.0, 0.0), RadioButtonStyle.fromTheme())
+    rb3.onClick() { println("[RadioButton] Option C selected") }
+    radioGroup.add(rb1); radioGroup.add(rb2); radioGroup.add(rb3)
+    radioGroup.onSelectionChanged() { idx => println("[RadioGroup] selection changed to index ${idx}") }
+    rbRow.add(rb1, LayoutParams.fixed(110.0, 24.0))
+    rbRow.add(rb2, LayoutParams.fixed(110.0, 24.0))
+    rbRow.add(rb3, LayoutParams.fixed(110.0, 24.0))
+    vbox.add(rbRow, LayoutParams.fixed(900.0, 28.0))
+
+    // --- LinkLabel + Toolbar ---
+    let sec5 = Label.styled("section-title", "LinkLabel / Toolbar — .onClick()",
+        Position.abs(0.0, 0.0), c.accent)
+    vbox.add(sec5, LayoutParams.fixed(900.0, 22.0))
+    let linkRow = HBox(16.0, 0.0)
+    linkRow.add(LinkLabel.styled("btn", "Open Docs", Position.abs(0.0, 0.0),
+        { => println("[Link] Docs clicked — would open URL") }), LayoutParams.fixed(120.0, 20.0))
+    linkRow.add(LinkLabel.styled("btn", "Visit GitHub", Position.abs(0.0, 0.0),
+        { => println("[Link] GitHub clicked — would open URL") }), LayoutParams.fixed(120.0, 20.0))
+    vbox.add(linkRow, LayoutParams.fixed(900.0, 26.0))
     let toolbar = Toolbar()
-    toolbar.addItem("New", { => println("Toolbar: New") })
-    toolbar.addItem("Open", { => println("Toolbar: Open") })
-    toolbar.addItem("Save", { => println("Toolbar: Save") })
-    toolbar.addItem("Refresh", { => println("Toolbar: Refresh") })
+    toolbar.addItem("Save", { => println("[Toolbar] Save clicked") })
+    toolbar.addItem("Undo", { => println("[Toolbar] Undo clicked") })
+    toolbar.addItem("Redo", { => println("[Toolbar] Redo clicked") })
     vbox.add(toolbar, LayoutParams.fixed(900.0, 32.0))
 
-    vbox.add(Separator(true, SeparatorStyle.fromTheme()), LayoutParams.fixed(900.0, 10.0))
-
-    let sec2 = Label.styled("section-title", "Link Labels", Position.abs(0.0, 0.0), c.accent)
-    vbox.add(sec2, LayoutParams.fixed(900.0, 24.0))
-    let linkRow = HBox(16.0, 0.0)
-    linkRow.add(LinkLabel.styled("btn", "Documentation", Position.abs(0.0, 0.0),
-        { => println("Link: Documentation clicked") }), LayoutParams.fixed(140.0, 22.0))
-    linkRow.add(LinkLabel.styled("btn", "GitHub Repository", Position.abs(0.0, 0.0),
-        { => println("Link: GitHub clicked") }), LayoutParams.fixed(160.0, 22.0))
-    linkRow.add(LinkLabel.styled("btn", "Report Issue", Position.abs(0.0, 0.0),
-        { => println("Link: Report Issue clicked") }), LayoutParams.fixed(120.0, 22.0))
-    vbox.add(linkRow, LayoutParams.fixed(900.0, 28.0))
-
-    vbox.add(Separator(true, SeparatorStyle.fromTheme()), LayoutParams.fixed(900.0, 10.0))
-
-    let sec3 = Label.styled("section-title", "StatusBar", Position.abs(0.0, 0.0), c.accent)
-    vbox.add(sec3, LayoutParams.fixed(900.0, 24.0))
+    // --- StatusBar ---
+    let sec6 = Label.styled("section-title", "StatusBar",
+        Position.abs(0.0, 0.0), c.accent)
+    vbox.add(sec6, LayoutParams.fixed(900.0, 22.0))
     let statusBar = StatusBar()
-    statusBar.setText("Ready  |  CJForm v1.3  |  Cangjie Windows UI Library")
+    statusBar.setText("All callbacks print to console  |  CJForm v1.4")
     vbox.add(statusBar, LayoutParams.fixed(900.0, 24.0))
-    let statusLabel = Label.styled("body-label", "Click toolbar buttons and links above — output goes to console",
-        Position.abs(0.0, 0.0), c.textTertiary)
-    vbox.add(statusLabel, LayoutParams.fixed(900.0, 20.0))
 
     scroll.setContent(vbox)
     scroll

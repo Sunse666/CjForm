@@ -7,9 +7,9 @@ public class TableColumn {
     public var width: Float32
     public let sortable: Bool
     public let resizable: Bool
-    public let alignment: Int32
+    public let alignment: TextAlignment
 
-    public init(title: String, width: Float32, sortable: Bool, resizable: Bool, alignment: Int32) {
+    public init(title: String, width: Float32, sortable: Bool, resizable: Bool, alignment: TextAlignment) {
         this.title = title
         this.width = width
         this.sortable = sortable
@@ -305,7 +305,7 @@ public class TableView <: Widget {
 
             if (colRight > frameX && colX < frameX + vpW2) {
                 canvas.fillRoundedRect(colX, frameY, col.width, headerHeight, 0.0, getHeaderBgColor())
-                canvas.drawTextAligned(colX + 4.0, frameY + 2.0, col.width - 8.0, headerHeight - 4.0, col.title, "Microsoft YaHei", 13.0, col.alignment, getHeaderTextColor())
+                canvas.drawTextAligned(colX + 4.0, frameY + 2.0, col.width - 8.0, headerHeight - 4.0, col.title, "Microsoft YaHei", 13.0, alignmentToInt(col.alignment), getHeaderTextColor())
 
                 if (sortColumn == colIdx) {
                     let arrow = if (sortAscending) { " ^" } else { " v" }
@@ -343,7 +343,7 @@ public class TableView <: Widget {
                 let cellRight = cellX + col.width
                 if (cellRight > frameX && cellX < frameX + vpW2) {
                     let cellText = if (Int64(ci) < row.size) { row[Int64(ci)] } else { "" }
-                    canvas.drawTextAligned(cellX + 4.0, y + 2.0, col.width - 8.0, rowHeight - 4.0, cellText, "Microsoft YaHei", 13.0, col.alignment, getCellTextColor())
+                    canvas.drawTextAligned(cellX + 4.0, y + 2.0, col.width - 8.0, rowHeight - 4.0, cellText, "Microsoft YaHei", 13.0, alignmentToInt(col.alignment), getCellTextColor())
                     canvas.drawLine(cellRight - 1.0, y, cellRight - 1.0, y + rowHeight, 1.0, getGridLineColor())
                 }
                 cellX = cellRight
@@ -649,6 +649,14 @@ public class TableView <: Widget {
             }
         }
         dataRows = sorted
+    }
+
+    private func alignmentToInt(a: TextAlignment): Int32 {
+        match (a) {
+            case TextAlignment.Left => 0
+            case TextAlignment.Center => 1
+            case TextAlignment.Right => 2
+        }
     }
 
     private func stringCompareGT(a: String, b: String): Bool {

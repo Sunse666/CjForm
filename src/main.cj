@@ -299,12 +299,12 @@ func createListsTab(): Widget {
 
 func createTableTab(): Widget {
     let tableView = TableView()
-    tableView.addColumn(TableColumn("#", 50.0, false, false, 1))
-    tableView.addColumn(TableColumn("Package", 180.0, true, true, 0))
-    tableView.addColumn(TableColumn("Version", 80.0, true, true, 1))
-    tableView.addColumn(TableColumn("Size", 80.0, true, false, 2))
-    tableView.addColumn(TableColumn("Status", 90.0, true, false, 0))
-    tableView.addColumn(TableColumn("Description", 400.0, false, true, 0))
+    tableView.addColumn(TableColumn("#", 50.0, false, false, TextAlignment.Center))
+    tableView.addColumn(TableColumn("Package", 180.0, true, true, TextAlignment.Left))
+    tableView.addColumn(TableColumn("Version", 80.0, true, true, TextAlignment.Center))
+    tableView.addColumn(TableColumn("Size", 80.0, true, false, TextAlignment.Right))
+    tableView.addColumn(TableColumn("Status", 90.0, true, false, TextAlignment.Left))
+    tableView.addColumn(TableColumn("Description", 400.0, false, true, TextAlignment.Left))
     let pkgs = [
         ["01", "cjform", "1.0.0", "345 KB", "Active", "Cangjie Windows UI Library"],
         ["02", "commonmark4cj", "0.3.0", "128 KB", "Active", "Markdown parser for Cangjie"],

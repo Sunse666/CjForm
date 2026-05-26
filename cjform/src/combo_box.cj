@@ -148,6 +148,13 @@ public class ComboBox <: Widget & Focusable {
     public func hasFocus(): Bool { isFocused }
     public func getFocusId(): Int64 { focusId }
 
+    private func getDropdownWidth(): Float32 {
+        match (layoutFrame) {
+            case Some(f) => f.width
+            case None => Float32(200.0)
+        }
+    }
+
     private func getSelectedLabel(): String {
         if (selectedIndex >= 0 && selectedIndex < Int32(items.size)) {
             items[Int64(selectedIndex)]
@@ -204,25 +211,26 @@ public class ComboBox <: Widget & Focusable {
         let count = items.size
         let dropH = if (Float32(count) * itemHeight > dropDownMaxHeight) { dropDownMaxHeight } else { Float32(count) * itemHeight }
 
-        canvas.drawShadow(dropX, dropY, Float32(200.0), dropH, 4.0, 6.0, 0.0, 4.0, getShadowColor())
-        canvas.fillRoundedRect(dropX, dropY, Float32(200.0), dropH, 4.0, getPopupBgColor())
-        canvas.drawRoundedRect(dropX, dropY, Float32(200.0), dropH, 4.0, 1.0, getPopupBorderColor())
+        let dropW = getDropdownWidth()
+        canvas.drawShadow(dropX, dropY, dropW, dropH, 4.0, 6.0, 0.0, 4.0, getShadowColor())
+        canvas.fillRoundedRect(dropX, dropY, dropW, dropH, 4.0, getPopupBgColor())
+        canvas.drawRoundedRect(dropX, dropY, dropW, dropH, 4.0, 1.0, getPopupBorderColor())
 
         for (i in 0..count) {
             let itemY = dropY + Float32(i) * itemHeight
             let itemIdx = Int32(i)
             if (itemIdx == hoveredItemIndex || itemIdx == selectedIndex) {
-                canvas.fillRoundedRect(dropX + 2.0, itemY + 1.0, Float32(196.0), itemHeight - 2.0, 3.0, getPopupItemHoverColor())
+                canvas.fillRoundedRect(dropX + 2.0, itemY + 1.0, dropW - 4.0, itemHeight - 2.0, 3.0, getPopupItemHoverColor())
             }
             let textColor = if (itemIdx == selectedIndex) { getPopupSelectedTextColor() } else { getPopupItemTextColor() }
-            canvas.drawTextAligned(dropX + 8.0, itemY, Float32(184.0), itemHeight, items[i], "Microsoft YaHei", 13.0, 0, textColor)
+            canvas.drawTextAligned(dropX + 8.0, itemY, dropW - 16.0, itemHeight, items[i], "Microsoft YaHei", 13.0, 0, textColor)
         }
     }
 
     public func hitTestDropdown(x: Float32, y: Float32, dropX: Float32, dropY: Float32): Bool {
         let count = items.size
         let dropH = if (Float32(count) * itemHeight > dropDownMaxHeight) { dropDownMaxHeight } else { Float32(count) * itemHeight }
-        x >= dropX && x <= dropX + Float32(200.0) && y >= dropY && y <= dropY + dropH
+        x >= dropX && x <= dropX + getDropdownWidth() && y >= dropY && y <= dropY + dropH
     }
 
     public func handleDropdownClick(x: Float32, y: Float32, dropX: Float32, dropY: Float32): Bool {

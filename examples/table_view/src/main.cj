@@ -10,12 +10,12 @@ main(): Int64 {
     win.setBackgroundColor(Theme.colors().bgSecondary)
 
     let tableView = TableView()
-    tableView.addColumn(TableColumn("#", 40.0, false, false, 1))
-    tableView.addColumn(TableColumn("Name", 120.0, true, true, 0))
-    tableView.addColumn(TableColumn("Version", 80.0, true, true, 1))
-    tableView.addColumn(TableColumn("Size", 70.0, true, false, 2))
-    tableView.addColumn(TableColumn("Status", 80.0, true, false, 0))
-    tableView.addColumn(TableColumn("Description", 200.0, false, true, 0))
+    tableView.addColumn(TableColumn("#", 40.0, false, false, TextAlignment.Center))
+    tableView.addColumn(TableColumn("Name", 120.0, true, true, TextAlignment.Left))
+    tableView.addColumn(TableColumn("Version", 80.0, true, true, TextAlignment.Center))
+    tableView.addColumn(TableColumn("Size", 70.0, true, false, TextAlignment.Right))
+    tableView.addColumn(TableColumn("Status", 80.0, true, false, TextAlignment.Left))
+    tableView.addColumn(TableColumn("Description", 200.0, false, true, TextAlignment.Left))
 
     let rows = ArrayList<ArrayList<String>>()
     let data = [

@@ -166,8 +166,8 @@ public class ScrollArea <: Widget {
                 let cw = child.getLayoutMinWidth()
                 let ch = child.getLayoutMinHeight()
                 match (layoutFrame) {
-                    case Some(f) => child.setLayoutFrame(LayoutFrame(f.x, f.y, cw, ch))
-                    case None => child.setLayoutFrame(LayoutFrame(0.0, 0.0, cw, ch))
+                    case Some(f) => child.setLayoutFrame(LayoutFrame(f.x - scrollX, f.y - scrollY, cw, ch))
+                    case None => child.setLayoutFrame(LayoutFrame(0.0 - scrollX, 0.0 - scrollY, cw, ch))
                 }
                 if (child.hitTest(x, y, 0.0, 0.0, 0.0, 0.0)) {
                     child.findLeafAt(x, y)
